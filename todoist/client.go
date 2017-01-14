@@ -16,10 +16,11 @@ type Client struct {
 	URL        *url.URL
 	HTTPClient *http.Client
 	Token      string
+	SyncToken  string
 	Logger     *log.Logger
 }
 
-func NewClient(endpoint, token string, logger *log.Logger) (*Client, error) {
+func NewClient(endpoint, token, sync_token string, logger *log.Logger) (*Client, error) {
 	if len(endpoint) == 0 {
 		endpoint = "https://todoist.com/API/v7"
 	}
@@ -34,11 +35,15 @@ func NewClient(endpoint, token string, logger *log.Logger) (*Client, error) {
 		return nil, errors.New("Missing API Token")
 	}
 
+	if len(sync_token) == 0 {
+		sync_token = "*"
+	}
+
 	if logger == nil {
 		logger = log.New(ioutil.Discard, "", log.LstdFlags)
 	}
 
-	return &Client{parsed_endpoint, client, token, logger}, nil
+	return &Client{parsed_endpoint, client, token, sync_token, logger}, nil
 }
 
 func (c *Client) NewRequest(ctx context.Context, method, spath string, values url.Values) (*http.Request, error) {
@@ -77,4 +82,36 @@ func decodeBody(resp *http.Response, out interface{}) error {
 	defer resp.Body.Close()
 	decoder := json.NewDecoder(resp.Body)
 	return decoder.Decode(out)
+}
+
+func (c *Client) Sync(ctx context.Context, commands []Command) (*SyncResponse, error) {
+	b, err := json.Marshal(commands)
+	if err != nil {
+		return nil, err
+	}
+	values := url.Values{
+		"sync_token":           {c.SyncToken},
+		"day_orders_timestamp": {""},
+		"resource_types":       {"[\"all\"]"},
+		"commands":             {string(b)},
+	}
+	req, err := c.NewSyncRequest(ctx, values)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	var out SyncResponse
+	err = decodeBody(res, &out)
+	if err != nil {
+		return nil, err
+	}
+	// TODO: replace temp_id mapping
+	// TODO: update state
+	// TODO: write cache
+	return &out, nil
 }
