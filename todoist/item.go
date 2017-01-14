@@ -1,5 +1,11 @@
 package todoist
 
+import (
+	"context"
+	"net/url"
+	"net/http"
+)
+
 type Item struct {
 	ID             int `json:"id"`
 	UserID         int `json:"user_id"`
@@ -22,4 +28,27 @@ type Item struct {
 	IsArchived     int `json:"is_archived"`
 	SyncID         int `json:"sync_id"`
 	DateAdded      string `json:"date_added"`
+}
+
+type ItemResponse struct {
+	Item    Item
+	Project Project
+	Notes   []Note
+}
+
+func (c *Client) GetItem(ctx context.Context, id string) (*ItemResponse, error) {
+	req, err := c.NewRequest(ctx, http.MethodGet, "items/get", url.Values{"item_id": {id}})
+	if err != nil {
+		return nil, err
+	}
+	res, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	var out ItemResponse
+	err = decodeBody(res, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
