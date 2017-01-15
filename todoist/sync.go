@@ -1,6 +1,6 @@
 package todoist
 
-type SyncResponse struct {
+type SyncState struct {
 	SyncToken string `json:"sync_token"`
 	FullSync  bool `json:"full_sync"`
 	// User User `json:"user"`

@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 	"path"
+	"os"
 )
 
 type Client struct {
@@ -17,10 +18,12 @@ type Client struct {
 	HTTPClient *http.Client
 	Token      string
 	SyncToken  string
+	CacheDir   string
+	SyncState  *SyncState
 	Logger     *log.Logger
 }
 
-func NewClient(endpoint, token, sync_token string, logger *log.Logger) (*Client, error) {
+func NewClient(endpoint, token, sync_token, cache_dir string, logger *log.Logger) (*Client, error) {
 	if len(endpoint) == 0 {
 		endpoint = "https://todoist.com/API/v7"
 	}
@@ -39,11 +42,25 @@ func NewClient(endpoint, token, sync_token string, logger *log.Logger) (*Client,
 		sync_token = "*"
 	}
 
+	if len(cache_dir) == 0 {
+		cache_dir = "$HOME/.go-todoist"
+	}
+	cache_dir = os.ExpandEnv(cache_dir)
+	if _, err = os.Stat(cache_dir); err != nil {
+		if err = os.MkdirAll(cache_dir, 0755); err != nil {
+			return nil, err
+		}
+	}
+
 	if logger == nil {
 		logger = log.New(ioutil.Discard, "", log.LstdFlags)
 	}
 
-	return &Client{parsed_endpoint, client, token, sync_token, logger}, nil
+	c := &Client{parsed_endpoint, client, token, sync_token, cache_dir, &SyncState{}, logger}
+	if err = c.readCache(); err != nil {
+		c.resetState()
+	}
+	return c, nil
 }
 
 func (c *Client) NewRequest(ctx context.Context, method, spath string, values url.Values) (*http.Request, error) {
@@ -84,10 +101,10 @@ func decodeBody(resp *http.Response, out interface{}) error {
 	return decoder.Decode(out)
 }
 
-func (c *Client) Sync(ctx context.Context, commands []Command) (*SyncResponse, error) {
+func (c *Client) Sync(ctx context.Context, commands []Command) error {
 	b, err := json.Marshal(commands)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	values := url.Values{
 		"sync_token":           {c.SyncToken},
@@ -97,21 +114,64 @@ func (c *Client) Sync(ctx context.Context, commands []Command) (*SyncResponse, e
 	}
 	req, err := c.NewSyncRequest(ctx, values)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	var out SyncResponse
+	var out SyncState
 	err = decodeBody(res, &out)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// TODO: replace temp_id mapping
-	// TODO: update state
-	// TODO: write cache
-	return &out, nil
+	c.updateState(&out)
+	c.writeCache()
+	return nil
+}
+
+func (c *Client) resetState() {
+	c.SyncToken = "*"
+	c.SyncState = &SyncState{}
+}
+
+func (c *Client) updateState(state *SyncState) {
+	c.SyncToken = state.SyncToken
+	c.SyncState = state
+}
+
+func (c *Client) readCache() error {
+	b, err := ioutil.ReadFile(path.Join(c.CacheDir, c.Token+".json"))
+	if err != nil {
+		return err
+	}
+	if err = json.Unmarshal(b, c.SyncState); err != nil {
+		return err
+	}
+	b, err = ioutil.ReadFile(path.Join(c.CacheDir, c.Token+".sync"))
+	if err != nil {
+		return err
+	}
+	c.SyncToken = string(b)
+	return nil
+}
+
+func (c *Client) writeCache() error {
+	if len(c.CacheDir) == 0 {
+		return nil
+	}
+	b, err := json.MarshalIndent(c.SyncState, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err = ioutil.WriteFile(path.Join(c.CacheDir, c.Token+".json"), b, 0644); err != nil {
+		return err
+	}
+	if err = ioutil.WriteFile(path.Join(c.CacheDir, c.Token+".sync"), []byte(c.SyncToken), 0644); err != nil {
+		return err
+	}
+	return nil
 }
