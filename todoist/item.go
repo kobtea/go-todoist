@@ -41,7 +41,7 @@ type ItemManager struct {
 	*Client
 }
 
-func (m *ItemManager) Add(ctx context.Context, item Item) (*Item, error) {
+func (m *ItemManager) Add(item Item) (*Item, error) {
 	if len(item.Content) == 0 {
 		return nil, errors.New("New item requires a content")
 	}
