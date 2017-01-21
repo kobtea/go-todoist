@@ -133,6 +133,11 @@ func (c *Client) Sync(ctx context.Context, commands []Command) error {
 	return nil
 }
 
+func (c *Client) FullSync(ctx context.Context, commands []Command) error {
+	c.resetState()
+	return c.Sync(ctx, commands)
+}
+
 func (c *Client) resetState() {
 	c.SyncToken = "*"
 	c.SyncState = &SyncState{}
