@@ -21,6 +21,8 @@ type Client struct {
 	CacheDir   string
 	SyncState  *SyncState
 	Logger     *log.Logger
+	Item       *ItemManager
+	queue      []Command
 }
 
 func NewClient(endpoint, token, sync_token, cache_dir string, logger *log.Logger) (*Client, error) {
@@ -56,7 +58,16 @@ func NewClient(endpoint, token, sync_token, cache_dir string, logger *log.Logger
 		logger = log.New(ioutil.Discard, "", log.LstdFlags)
 	}
 
-	c := &Client{parsed_endpoint, client, token, sync_token, cache_dir, &SyncState{}, logger}
+	c := &Client{
+		URL:        parsed_endpoint,
+		HTTPClient: client,
+		Token:      token,
+		SyncToken:  sync_token,
+		CacheDir:   cache_dir,
+		SyncState:  &SyncState{},
+		Logger:     logger,
+	}
+	c.Item = &ItemManager{c}
 	if err = c.readCache(); err != nil {
 		c.resetState()
 	}
@@ -136,6 +147,15 @@ func (c *Client) Sync(ctx context.Context, commands []Command) error {
 func (c *Client) FullSync(ctx context.Context, commands []Command) error {
 	c.resetState()
 	return c.Sync(ctx, commands)
+}
+
+func (c *Client) Commit(ctx context.Context) error {
+	if len(c.queue) == 0 {
+		return nil
+	}
+	err := c.Sync(ctx, c.queue)
+	c.queue = []Command{}
+	return err
 }
 
 func (c *Client) resetState() {

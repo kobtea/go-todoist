@@ -24,6 +24,6 @@ type SyncState struct {
 type Command struct {
 	Type   string `json:"type"`
 	Args   interface{} `json:"args"`
-	UUID   string `json:"uuid"`
-	TempID string `json:"temp_id"`
+	UUID   UUID `json:"uuid"`
+	TempID ID `json:"temp_id"`
 }
