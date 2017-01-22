@@ -1,7 +1,7 @@
 package todoist
 
 type Note struct {
-	ID        int `json:"id"`
+	Entity
 	PostedUID int `json:"posted_uid"`
 	ItemID    int `json:"item_id"`
 	ProjectID int `json:"project_id"`
@@ -14,7 +14,6 @@ type Note struct {
 		UploadState string `json:"upload_state"`
 	} `json:"file_attachment"`
 	UIDsToNotify []int `json:"uids_to_notify"`
-	IsDeleted    int `json:"is_deleted"`
 	IsArchived   int `json:"is_archived"`
 	Posted       string `json:"posted"`
 }

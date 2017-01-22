@@ -25,6 +25,10 @@ func IsValidID(id ID) bool {
 	return false
 }
 
+func (i ID) String() string {
+	return string(i)
+}
+
 func (i ID) MarshalJSON() ([]byte, error) {
 	s := string(i)
 	if IsTempID(i) {

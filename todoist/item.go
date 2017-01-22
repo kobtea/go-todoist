@@ -148,7 +148,8 @@ func (m *ItemManager) Close(id ID) error {
 }
 
 func (m *ItemManager) Get(ctx context.Context, id ID) (*ItemResponse, error) {
-	req, err := m.NewRequest(ctx, http.MethodGet, "items/get", url.Values{"item_id": {id}})
+	values := url.Values{"item_id": {id.String()}}
+	req, err := m.NewRequest(ctx, http.MethodGet, "items/get", values)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +166,8 @@ func (m *ItemManager) Get(ctx context.Context, id ID) (*ItemResponse, error) {
 }
 
 func (m *ItemManager) GetCompleted(ctx context.Context, projectID ID) (*[]Item, error) {
-	req, err := m.NewRequest(ctx, http.MethodGet, "items/get_completed", url.Values{"project_id": {projectID}})
+	values := url.Values{"project_id": {projectID.String()}}
+	req, err := m.NewRequest(ctx, http.MethodGet, "items/get_completed", values)
 	if err != nil {
 		return nil, err
 	}

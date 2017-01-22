@@ -1,7 +1,7 @@
 package todoist
 
 type Reminder struct {
-	ID         int `json:"id"`
+	Entity
 	NotifyUID  int `json:"notify_uid"`
 	ItemID     int `json:"item_id"`
 	Service    string `json:"service"`
@@ -15,5 +15,4 @@ type Reminder struct {
 	LocLong    string `json:"loc_long"`
 	LocTrigger string `json:"loc_trigger"`
 	Radius     int `json:"radius"`
-	IsDeleted  int `json:"is_deleted"`
 }
