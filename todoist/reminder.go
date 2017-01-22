@@ -2,8 +2,8 @@ package todoist
 
 type Reminder struct {
 	Entity
-	NotifyUID  int `json:"notify_uid"`
-	ItemID     int `json:"item_id"`
+	NotifyUID  ID `json:"notify_uid"`
+	ItemID     ID `json:"item_id"`
 	Service    string `json:"service"`
 	Type       string `json:"type"`
 	DateString string `json:"date_string"`

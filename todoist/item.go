@@ -10,7 +10,7 @@ import (
 
 type Item struct {
 	Entity
-	UserID         int `json:"user_id,omitempty"`
+	UserID         ID `json:"user_id,omitempty"`
 	ProjectID      ID `json:"project_id,omitempty"`
 	Content        string `json:"content"`
 	DateString     string `json:"date_string,omitempty"`
@@ -22,8 +22,8 @@ type Item struct {
 	DayOrder       int `json:"day_order,omitempty"`
 	Collapsed      int `json:"collapsed,omitempty"`
 	Labels         []int `json:"labels,omitempty"`
-	AssignedByUID  int `json:"assigned_by_uid,omitempty"`
-	ResponsibleUID int `json:"responsible_uid,omitempty"`
+	AssignedByUID  ID `json:"assigned_by_uid,omitempty"`
+	ResponsibleUID ID `json:"responsible_uid,omitempty"`
 	Checked        int `json:"checked,omitempty"`
 	InHistory      int `json:"in_history,omitempty"`
 	IsArchived     int `json:"is_archived,omitempty"`
