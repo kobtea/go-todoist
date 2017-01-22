@@ -9,13 +9,20 @@ import (
 type ID string
 
 func NewID(id string) (ID, error) {
-	if _, err := strconv.Atoi(id); err == nil {
-		return ID(id), nil
-	}
-	if IsTempID(ID(id)) {
+	if IsValidID(ID(id)) {
 		return ID(id), nil
 	}
 	return "", fmt.Errorf("Invalid ID: %s", id)
+}
+
+func IsValidID(id ID) bool {
+	if _, err := strconv.Atoi(string(id)); err == nil {
+		return true
+	}
+	if IsTempID(id) {
+		return true
+	}
+	return false
 }
 
 func (i ID) MarshalJSON() ([]byte, error) {
@@ -29,7 +36,7 @@ func (i ID) MarshalJSON() ([]byte, error) {
 func (i *ID) UnmarshalJSON(b []byte) (err error) {
 	s, err := strconv.Unquote(string(b))
 	if err != nil {
-		s = string(b)  // integer id
+		s = string(b) // integer id
 	}
 	id, err := NewID(s)
 	if err != nil {
