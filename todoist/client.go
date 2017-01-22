@@ -158,13 +158,47 @@ func (c *Client) Commit(ctx context.Context) error {
 	return err
 }
 
+func (c *Client) ResetSyncToken() {
+	c.SyncToken = "*"
+}
+
 func (c *Client) resetState() {
 	c.SyncToken = "*"
 	c.SyncState = &SyncState{}
 }
 
 func (c *Client) updateState(state *SyncState) {
-	c.SyncToken = state.SyncToken
+	if len(state.SyncToken) != 0 {
+		c.SyncToken = state.SyncToken
+	}
+	/* TODO:
+	- day_orders
+	- day_orders_timestamp
+	- live_notifications_last_read_id
+	- locations
+	- settings_notifications
+	- user
+	 */
+	for _, item := range state.Items {
+		cachedItem := c.Item.Resolve(item.ID)
+		if cachedItem == nil {
+			if !item.IsDeleted {
+				c.SyncState.Items = append(c.SyncState.Items, item)
+			}
+		} else {
+			if item.IsDeleted {
+				var res []Item
+				for _, i := range c.SyncState.Items {
+					if !i.Equal(cachedItem) {
+						res = append(res, i)
+					}
+				}
+				c.SyncState.Items = res
+			} else {
+				cachedItem = &item
+			}
+		}
+	}
 	c.SyncState = state
 }
 

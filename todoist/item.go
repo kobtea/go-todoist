@@ -8,7 +8,7 @@ import (
 )
 
 type Item struct {
-	ID             ID `json:"id,omitempty"`
+	Entity
 	UserID         int `json:"user_id,omitempty"`
 	ProjectID      ID `json:"project_id,omitempty"`
 	Content        string `json:"content"`
@@ -25,7 +25,6 @@ type Item struct {
 	ResponsibleUID int `json:"responsible_uid,omitempty"`
 	Checked        int `json:"checked,omitempty"`
 	InHistory      int `json:"in_history,omitempty"`
-	IsDeleted      int `json:"is_deleted,omitempty"`
 	IsArchived     int `json:"is_archived,omitempty"`
 	SyncID         int `json:"sync_id,omitempty"`
 	DateAdded      string `json:"date_added,omitempty"`
@@ -72,4 +71,13 @@ func (m *ItemManager) Get(ctx context.Context, id string) (*ItemResponse, error)
 		return nil, err
 	}
 	return &out, nil
+}
+
+func (m *ItemManager) Resolve(id ID) *Item {
+	for _, item := range m.SyncState.Items {
+		if item.ID == id {
+			return &item
+		}
+	}
+	return nil
 }
