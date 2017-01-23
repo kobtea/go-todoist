@@ -1,8 +1,11 @@
 package todoist
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"github.com/stretchr/goweb/http"
+	"net/url"
 )
 
 type Project struct {
@@ -84,5 +87,78 @@ func (m *ProjectManager) Unarchive(ids []ID) error {
 		},
 	}
 	m.queue = append(m.queue, command)
+	return nil
+}
+
+type ProjectGetResponse struct {
+	Project Project
+	Notes   []Note
+}
+
+func (m *ProjectManager) Get(ctx context.Context, id ID) (*ProjectGetResponse, error) {
+	values := url.Values{"project_id": {id.String()}}
+	req, err := m.NewRequest(ctx, http.MethodGet, "projects/get", values)
+	if err != nil {
+		return nil, err
+	}
+	res, err := m.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	var out ProjectGetResponse
+	err = decodeBody(res, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type ProjectGetDataResponse struct {
+	Project Project
+	Items   []Item
+}
+
+func (m *ProjectManager) GetData(ctx context.Context, id ID) (*ProjectGetDataResponse, error) {
+	values := url.Values{"project_id": {id.String()}}
+	req, err := m.NewRequest(ctx, http.MethodGet, "projects/get_data", values)
+	if err != nil {
+		return nil, err
+	}
+	res, err := m.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	var out ProjectGetDataResponse
+	err = decodeBody(res, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (m *ProjectManager) GetArchived(ctx context.Context) (*[]Project, error) {
+	values := url.Values{}
+	req, err := m.NewRequest(ctx, http.MethodGet, "projects/get_archived", values)
+	if err != nil {
+		return nil, err
+	}
+	res, err := m.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	var out []Project
+	err = decodeBody(res, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (m *ProjectManager) Resolve(id ID) *Project {
+	for _, project := range m.SyncState.Projects {
+		if project.ID == id {
+			return &project
+		}
+	}
 	return nil
 }

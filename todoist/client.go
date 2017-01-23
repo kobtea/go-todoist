@@ -22,6 +22,7 @@ type Client struct {
 	SyncState  *SyncState
 	Logger     *log.Logger
 	Item       *ItemManager
+	Project    *ProjectManager
 	queue      []Command
 }
 
@@ -68,6 +69,7 @@ func NewClient(endpoint, token, sync_token, cache_dir string, logger *log.Logger
 		Logger:     logger,
 	}
 	c.Item = &ItemManager{c}
+	c.Project = &ProjectManager{c}
 	if err = c.readCache(); err != nil {
 		c.resetState()
 	}
@@ -196,6 +198,26 @@ func (c *Client) updateState(state *SyncState) {
 				c.SyncState.Items = res
 			} else {
 				cachedItem = &item
+			}
+		}
+	}
+	for _, project := range state.Projects {
+		cachedProject := c.Project.Resolve(project.ID)
+		if cachedProject == nil {
+			if !project.IsDeleted {
+				c.SyncState.Projects = append(c.SyncState.Projects, project)
+			}
+		} else {
+			if project.IsDeleted {
+				var res []Project
+				for _, p := range c.SyncState.Projects {
+					if !p.Equal(cachedProject) {
+						res = append(res, p)
+					}
+				}
+				c.SyncState.Projects = res
+			} else {
+				cachedProject = &project
 			}
 		}
 	}
