@@ -1,9 +1,9 @@
 package todoist
 
 import (
+	"fmt"
 	"github.com/satori/go.uuid"
 	"strconv"
-	"fmt"
 )
 
 type ID string

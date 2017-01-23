@@ -8,9 +8,9 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"strings"
-	"path"
 	"os"
+	"path"
+	"strings"
 )
 
 type Client struct {
@@ -178,7 +178,7 @@ func (c *Client) updateState(state *SyncState) {
 	- locations
 	- settings_notifications
 	- user
-	 */
+	*/
 	for _, item := range state.Items {
 		cachedItem := c.Item.Resolve(item.ID)
 		if cachedItem == nil {

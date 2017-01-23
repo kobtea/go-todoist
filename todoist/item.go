@@ -2,32 +2,32 @@ package todoist
 
 import (
 	"context"
-	"net/url"
-	"net/http"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
 )
 
 type Item struct {
 	Entity
-	UserID         ID `json:"user_id,omitempty"`
-	ProjectID      ID `json:"project_id,omitempty"`
+	UserID         ID     `json:"user_id,omitempty"`
+	ProjectID      ID     `json:"project_id,omitempty"`
 	Content        string `json:"content"`
 	DateString     string `json:"date_string,omitempty"`
 	DateLang       string `json:"date_lang,omitempty"`
 	DueDateUtc     string `json:"due_date_utc,omitempty"`
-	Priority       int `json:"priority,omitempty"`
-	Indent         int `json:"indent,omitempty"`
-	ItemOrder      int `json:"item_order,omitempty"`
-	DayOrder       int `json:"day_order,omitempty"`
-	Collapsed      int `json:"collapsed,omitempty"`
-	Labels         []int `json:"labels,omitempty"`
-	AssignedByUID  ID `json:"assigned_by_uid,omitempty"`
-	ResponsibleUID ID `json:"responsible_uid,omitempty"`
-	Checked        int `json:"checked,omitempty"`
-	InHistory      int `json:"in_history,omitempty"`
-	IsArchived     int `json:"is_archived,omitempty"`
-	SyncID         int `json:"sync_id,omitempty"`
+	Priority       int    `json:"priority,omitempty"`
+	Indent         int    `json:"indent,omitempty"`
+	ItemOrder      int    `json:"item_order,omitempty"`
+	DayOrder       int    `json:"day_order,omitempty"`
+	Collapsed      int    `json:"collapsed,omitempty"`
+	Labels         []int  `json:"labels,omitempty"`
+	AssignedByUID  ID     `json:"assigned_by_uid,omitempty"`
+	ResponsibleUID ID     `json:"responsible_uid,omitempty"`
+	Checked        int    `json:"checked,omitempty"`
+	InHistory      int    `json:"in_history,omitempty"`
+	IsArchived     int    `json:"is_archived,omitempty"`
+	SyncID         int    `json:"sync_id,omitempty"`
 	DateAdded      string `json:"date_added,omitempty"`
 }
 
@@ -71,7 +71,7 @@ func (m *ItemManager) Update(item Item) (*Item, error) {
 	return &item, nil
 }
 
-func (m *ItemManager) Delete(ids []ID) (error) {
+func (m *ItemManager) Delete(ids []ID) error {
 	command := Command{
 		Type: "item_delete",
 		UUID: GenerateUUID(),

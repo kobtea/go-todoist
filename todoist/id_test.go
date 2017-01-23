@@ -1,10 +1,10 @@
 package todoist
 
 import (
-	"testing"
-	"reflect"
 	"errors"
+	"reflect"
 	"strconv"
+	"testing"
 )
 
 var testIDs = []struct {

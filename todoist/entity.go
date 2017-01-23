@@ -6,7 +6,7 @@ type Identifier interface {
 }
 
 type Entity struct {
-	ID        ID `json:"id,omitempty"`
+	ID        ID      `json:"id,omitempty"`
 	IsDeleted IntBool `json:"is_deleted,omitempty"`
 }
 

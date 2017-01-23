@@ -16,7 +16,7 @@ func TestIntBool_UnmarshalJSON(t *testing.T) {
 	var v IntBool
 	err := v.UnmarshalJSON([]byte(s))
 	if err != nil || v != IntBool(false) {
-		t.Errorf("Expect %s, but got %s", IntBool(false), v)
+		t.Errorf("Expect %v, but got %v", IntBool(false), v)
 	}
 
 	s = "10"
