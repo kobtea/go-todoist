@@ -21,8 +21,8 @@ type Client struct {
 	CacheDir   string
 	SyncState  *SyncState
 	Logger     *log.Logger
-	Item       *ItemManager
-	Project    *ProjectManager
+	Item       *ItemClient
+	Project    *ProjectClient
 	queue      []Command
 }
 
@@ -68,8 +68,8 @@ func NewClient(endpoint, token, sync_token, cache_dir string, logger *log.Logger
 		SyncState:  &SyncState{},
 		Logger:     logger,
 	}
-	c.Item = &ItemManager{c}
-	c.Project = &ProjectManager{c}
+	c.Item = &ItemClient{c}
+	c.Project = &ProjectClient{c}
 	if err = c.readCache(); err != nil {
 		c.resetState()
 	}

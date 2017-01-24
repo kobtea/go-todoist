@@ -21,27 +21,27 @@ type Project struct {
 	TeamInbox    bool   `json:"team_inbox"`
 }
 
-type ProjectManager struct {
+type ProjectClient struct {
 	*Client
 }
 
-func (m *ProjectManager) Add(project Project) (*Project, error) {
+func (c *ProjectClient) Add(project Project) (*Project, error) {
 	if len(project.Name) == 0 {
 		return nil, errors.New("New project requires a name")
 	}
 	project.ID = GenerateTempID()
-	m.SyncState.Projects = append(m.SyncState.Projects, project)
+	c.SyncState.Projects = append(c.SyncState.Projects, project)
 	command := Command{
 		Type:   "project_add",
 		Args:   project,
 		UUID:   GenerateUUID(),
 		TempID: project.ID,
 	}
-	m.queue = append(m.queue, command)
+	c.queue = append(c.queue, command)
 	return &project, nil
 }
 
-func (m *ProjectManager) Update(project Project) (*Project, error) {
+func (c *ProjectClient) Update(project Project) (*Project, error) {
 	if !IsValidID(project.ID) {
 		return nil, fmt.Errorf("Invalid id: %s", project.ID)
 	}
@@ -50,11 +50,11 @@ func (m *ProjectManager) Update(project Project) (*Project, error) {
 		Args: project,
 		UUID: GenerateUUID(),
 	}
-	m.queue = append(m.queue, command)
+	c.queue = append(c.queue, command)
 	return &project, nil
 }
 
-func (m *ProjectManager) Delete(ids []ID) error {
+func (c *ProjectClient) Delete(ids []ID) error {
 	command := Command{
 		Type: "project_delete",
 		UUID: GenerateUUID(),
@@ -62,11 +62,11 @@ func (m *ProjectManager) Delete(ids []ID) error {
 			"ids": ids,
 		},
 	}
-	m.queue = append(m.queue, command)
+	c.queue = append(c.queue, command)
 	return nil
 }
 
-func (m *ProjectManager) Archive(ids []ID) error {
+func (c *ProjectClient) Archive(ids []ID) error {
 	command := Command{
 		Type: "project_archive",
 		UUID: GenerateUUID(),
@@ -74,11 +74,11 @@ func (m *ProjectManager) Archive(ids []ID) error {
 			"ids": ids,
 		},
 	}
-	m.queue = append(m.queue, command)
+	c.queue = append(c.queue, command)
 	return nil
 }
 
-func (m *ProjectManager) Unarchive(ids []ID) error {
+func (c *ProjectClient) Unarchive(ids []ID) error {
 	command := Command{
 		Type: "project_unarchive",
 		UUID: GenerateUUID(),
@@ -86,7 +86,7 @@ func (m *ProjectManager) Unarchive(ids []ID) error {
 			"ids": ids,
 		},
 	}
-	m.queue = append(m.queue, command)
+	c.queue = append(c.queue, command)
 	return nil
 }
 
@@ -95,13 +95,13 @@ type ProjectGetResponse struct {
 	Notes   []Note
 }
 
-func (m *ProjectManager) Get(ctx context.Context, id ID) (*ProjectGetResponse, error) {
+func (c *ProjectClient) Get(ctx context.Context, id ID) (*ProjectGetResponse, error) {
 	values := url.Values{"project_id": {id.String()}}
-	req, err := m.NewRequest(ctx, http.MethodGet, "projects/get", values)
+	req, err := c.NewRequest(ctx, http.MethodGet, "projects/get", values)
 	if err != nil {
 		return nil, err
 	}
-	res, err := m.HTTPClient.Do(req)
+	res, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -118,13 +118,13 @@ type ProjectGetDataResponse struct {
 	Items   []Item
 }
 
-func (m *ProjectManager) GetData(ctx context.Context, id ID) (*ProjectGetDataResponse, error) {
+func (c *ProjectClient) GetData(ctx context.Context, id ID) (*ProjectGetDataResponse, error) {
 	values := url.Values{"project_id": {id.String()}}
-	req, err := m.NewRequest(ctx, http.MethodGet, "projects/get_data", values)
+	req, err := c.NewRequest(ctx, http.MethodGet, "projects/get_data", values)
 	if err != nil {
 		return nil, err
 	}
-	res, err := m.HTTPClient.Do(req)
+	res, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -136,13 +136,13 @@ func (m *ProjectManager) GetData(ctx context.Context, id ID) (*ProjectGetDataRes
 	return &out, nil
 }
 
-func (m *ProjectManager) GetArchived(ctx context.Context) (*[]Project, error) {
+func (c *ProjectClient) GetArchived(ctx context.Context) (*[]Project, error) {
 	values := url.Values{}
-	req, err := m.NewRequest(ctx, http.MethodGet, "projects/get_archived", values)
+	req, err := c.NewRequest(ctx, http.MethodGet, "projects/get_archived", values)
 	if err != nil {
 		return nil, err
 	}
-	res, err := m.HTTPClient.Do(req)
+	res, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -154,8 +154,8 @@ func (m *ProjectManager) GetArchived(ctx context.Context) (*[]Project, error) {
 	return &out, nil
 }
 
-func (m *ProjectManager) Resolve(id ID) *Project {
-	for _, project := range m.SyncState.Projects {
+func (c *ProjectClient) Resolve(id ID) *Project {
+	for _, project := range c.SyncState.Projects {
 		if project.ID == id {
 			return &project
 		}

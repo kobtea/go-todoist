@@ -37,28 +37,28 @@ type ItemResponse struct {
 	Notes   []Note
 }
 
-type ItemManager struct {
+type ItemClient struct {
 	*Client
 }
 
-func (m *ItemManager) Add(item Item) (*Item, error) {
+func (c *ItemClient) Add(item Item) (*Item, error) {
 	if len(item.Content) == 0 {
 		return nil, errors.New("New item requires a content")
 	}
 	item.ID = GenerateTempID()
 	// append item to sync state only `add` method?
-	m.SyncState.Items = append(m.SyncState.Items, item)
+	c.SyncState.Items = append(c.SyncState.Items, item)
 	command := Command{
 		Type:   "item_add",
 		Args:   item,
 		UUID:   GenerateUUID(),
 		TempID: item.ID,
 	}
-	m.queue = append(m.queue, command)
+	c.queue = append(c.queue, command)
 	return &item, nil
 }
 
-func (m *ItemManager) Update(item Item) (*Item, error) {
+func (c *ItemClient) Update(item Item) (*Item, error) {
 	if !IsValidID(item.ID) {
 		return nil, fmt.Errorf("Invalid id: %s", item.ID)
 	}
@@ -67,11 +67,11 @@ func (m *ItemManager) Update(item Item) (*Item, error) {
 		Args: item,
 		UUID: GenerateUUID(),
 	}
-	m.queue = append(m.queue, command)
+	c.queue = append(c.queue, command)
 	return &item, nil
 }
 
-func (m *ItemManager) Delete(ids []ID) error {
+func (c *ItemClient) Delete(ids []ID) error {
 	command := Command{
 		Type: "item_delete",
 		UUID: GenerateUUID(),
@@ -79,11 +79,11 @@ func (m *ItemManager) Delete(ids []ID) error {
 			"ids": ids,
 		},
 	}
-	m.queue = append(m.queue, command)
+	c.queue = append(c.queue, command)
 	return nil
 }
 
-func (m *ItemManager) Move(projectItems map[ID][]ID, toProject ID) error {
+func (c *ItemClient) Move(projectItems map[ID][]ID, toProject ID) error {
 	command := Command{
 		Type: "item_move",
 		UUID: GenerateUUID(),
@@ -92,11 +92,11 @@ func (m *ItemManager) Move(projectItems map[ID][]ID, toProject ID) error {
 			"to_project":    toProject,
 		},
 	}
-	m.queue = append(m.queue, command)
+	c.queue = append(c.queue, command)
 	return nil
 }
 
-func (m *ItemManager) Complete(ids []ID, forceHistory bool) error {
+func (c *ItemClient) Complete(ids []ID, forceHistory bool) error {
 	var fh int
 	if forceHistory {
 		fh = 1
@@ -111,11 +111,11 @@ func (m *ItemManager) Complete(ids []ID, forceHistory bool) error {
 			"force_history": fh,
 		},
 	}
-	m.queue = append(m.queue, command)
+	c.queue = append(c.queue, command)
 	return nil
 }
 
-func (m *ItemManager) Uncomplete(ids []ID, updateItemOrders bool, restoreState map[ID][]string) error {
+func (c *ItemClient) Uncomplete(ids []ID, updateItemOrders bool, restoreState map[ID][]string) error {
 	var uio int
 	if updateItemOrders {
 		uio = 1
@@ -131,11 +131,11 @@ func (m *ItemManager) Uncomplete(ids []ID, updateItemOrders bool, restoreState m
 			"restore_state":      restoreState,
 		},
 	}
-	m.queue = append(m.queue, command)
+	c.queue = append(c.queue, command)
 	return nil
 }
 
-func (m *ItemManager) Close(id ID) error {
+func (c *ItemClient) Close(id ID) error {
 	command := Command{
 		Type: "item_close",
 		UUID: GenerateUUID(),
@@ -143,17 +143,17 @@ func (m *ItemManager) Close(id ID) error {
 			"id": id,
 		},
 	}
-	m.queue = append(m.queue, command)
+	c.queue = append(c.queue, command)
 	return nil
 }
 
-func (m *ItemManager) Get(ctx context.Context, id ID) (*ItemResponse, error) {
+func (c *ItemClient) Get(ctx context.Context, id ID) (*ItemResponse, error) {
 	values := url.Values{"item_id": {id.String()}}
-	req, err := m.NewRequest(ctx, http.MethodGet, "items/get", values)
+	req, err := c.NewRequest(ctx, http.MethodGet, "items/get", values)
 	if err != nil {
 		return nil, err
 	}
-	res, err := m.HTTPClient.Do(req)
+	res, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -165,13 +165,13 @@ func (m *ItemManager) Get(ctx context.Context, id ID) (*ItemResponse, error) {
 	return &out, nil
 }
 
-func (m *ItemManager) GetCompleted(ctx context.Context, projectID ID) (*[]Item, error) {
+func (c *ItemClient) GetCompleted(ctx context.Context, projectID ID) (*[]Item, error) {
 	values := url.Values{"project_id": {projectID.String()}}
-	req, err := m.NewRequest(ctx, http.MethodGet, "items/get_completed", values)
+	req, err := c.NewRequest(ctx, http.MethodGet, "items/get_completed", values)
 	if err != nil {
 		return nil, err
 	}
-	res, err := m.HTTPClient.Do(req)
+	res, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -183,8 +183,8 @@ func (m *ItemManager) GetCompleted(ctx context.Context, projectID ID) (*[]Item, 
 	return &out, nil
 }
 
-func (m *ItemManager) Resolve(id ID) *Item {
-	for _, item := range m.SyncState.Items {
+func (c *ItemClient) Resolve(id ID) *Item {
+	for _, item := range c.SyncState.Items {
 		if item.ID == id {
 			return &item
 		}
