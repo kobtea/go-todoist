@@ -31,12 +31,6 @@ type Item struct {
 	DateAdded      string `json:"date_added,omitempty"`
 }
 
-type ItemResponse struct {
-	Item    Item
-	Project Project
-	Notes   []Note
-}
-
 type ItemClient struct {
 	*Client
 }
@@ -147,7 +141,13 @@ func (c *ItemClient) Close(id ID) error {
 	return nil
 }
 
-func (c *ItemClient) Get(ctx context.Context, id ID) (*ItemResponse, error) {
+type ItemGetResponse struct {
+	Item    Item
+	Project Project
+	Notes   []Note
+}
+
+func (c *ItemClient) Get(ctx context.Context, id ID) (*ItemGetResponse, error) {
 	values := url.Values{"item_id": {id.String()}}
 	req, err := c.NewRequest(ctx, http.MethodGet, "items/get", values)
 	if err != nil {
@@ -157,7 +157,7 @@ func (c *ItemClient) Get(ctx context.Context, id ID) (*ItemResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	var out ItemResponse
+	var out ItemGetResponse
 	err = decodeBody(res, &out)
 	if err != nil {
 		return nil, err
