@@ -1,11 +1,11 @@
 package todoist
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"context"
-	"net/url"
 	"net/http"
+	"net/url"
 )
 
 type Label struct {
@@ -26,9 +26,9 @@ func (c *LabelClient) Add(label Label) (*Label, error) {
 	label.ID = GenerateTempID()
 	c.SyncState.Labels = append(c.SyncState.Labels, label)
 	command := Command{
-		Type: "label_add",
-		Args: label,
-		UUID: GenerateUUID(),
+		Type:   "label_add",
+		Args:   label,
+		UUID:   GenerateUUID(),
 		TempID: label.ID,
 	}
 	c.queue = append(c.queue, command)
