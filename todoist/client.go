@@ -21,6 +21,7 @@ type Client struct {
 	CacheDir   string
 	SyncState  *SyncState
 	Logger     *log.Logger
+	Filter     *FilterClient
 	Item       *ItemClient
 	Label      *LabelClient
 	Project    *ProjectClient
@@ -69,6 +70,7 @@ func NewClient(endpoint, token, sync_token, cache_dir string, logger *log.Logger
 		SyncState:  &SyncState{},
 		Logger:     logger,
 	}
+	c.Filter = &FilterClient{c}
 	c.Item = &ItemClient{c}
 	c.Label = &LabelClient{c}
 	c.Project = &ProjectClient{c}
@@ -183,6 +185,26 @@ func (c *Client) updateState(state *SyncState) {
 	- settings_notifications
 	- user
 	*/
+	for _, filter := range state.Filters {
+		cachedFilter := c.Filter.Resolve(filter.ID)
+		if cachedFilter == nil {
+			if !filter.IsDeleted {
+				c.SyncState.Filters = append(c.SyncState.Filters, filter)
+			}
+		} else {
+			if filter.IsDeleted {
+				var res []Filter
+				for _, f := range c.SyncState.Filters {
+					if !f.Equal(cachedFilter) {
+						res = append(res, f)
+					}
+				}
+				c.SyncState.Filters = res
+			} else {
+				cachedFilter = &filter
+			}
+		}
+	}
 	for _, item := range state.Items {
 		cachedItem := c.Item.Resolve(item.ID)
 		if cachedItem == nil {
