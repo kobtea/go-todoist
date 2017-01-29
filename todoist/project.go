@@ -30,7 +30,7 @@ func (c *ProjectClient) Add(project Project) (*Project, error) {
 		return nil, errors.New("New project requires a name")
 	}
 	project.ID = GenerateTempID()
-	c.SyncState.Projects = append(c.SyncState.Projects, project)
+	c.syncState.Projects = append(c.syncState.Projects, project)
 	command := Command{
 		Type:   "project_add",
 		Args:   project,
@@ -97,7 +97,7 @@ type ProjectGetResponse struct {
 
 func (c *ProjectClient) Get(ctx context.Context, id ID) (*ProjectGetResponse, error) {
 	values := url.Values{"project_id": {id.String()}}
-	req, err := c.NewRequest(ctx, http.MethodGet, "projects/get", values)
+	req, err := c.newRequest(ctx, http.MethodGet, "projects/get", values)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ type ProjectGetDataResponse struct {
 
 func (c *ProjectClient) GetData(ctx context.Context, id ID) (*ProjectGetDataResponse, error) {
 	values := url.Values{"project_id": {id.String()}}
-	req, err := c.NewRequest(ctx, http.MethodGet, "projects/get_data", values)
+	req, err := c.newRequest(ctx, http.MethodGet, "projects/get_data", values)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (c *ProjectClient) GetData(ctx context.Context, id ID) (*ProjectGetDataResp
 
 func (c *ProjectClient) GetArchived(ctx context.Context) (*[]Project, error) {
 	values := url.Values{}
-	req, err := c.NewRequest(ctx, http.MethodGet, "projects/get_archived", values)
+	req, err := c.newRequest(ctx, http.MethodGet, "projects/get_archived", values)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func (c *ProjectClient) GetArchived(ctx context.Context) (*[]Project, error) {
 }
 
 func (c *ProjectClient) Resolve(id ID) *Project {
-	for _, project := range c.SyncState.Projects {
+	for _, project := range c.syncState.Projects {
 		if project.ID == id {
 			return &project
 		}

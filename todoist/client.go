@@ -19,7 +19,7 @@ type Client struct {
 	Token      string
 	SyncToken  string
 	CacheDir   string
-	SyncState  *SyncState
+	syncState  *SyncState
 	Logger     *log.Logger
 	Filter     *FilterClient
 	Item       *ItemClient
@@ -67,7 +67,7 @@ func NewClient(endpoint, token, sync_token, cache_dir string, logger *log.Logger
 		Token:      token,
 		SyncToken:  sync_token,
 		CacheDir:   cache_dir,
-		SyncState:  &SyncState{},
+		syncState:  &SyncState{},
 		Logger:     logger,
 	}
 	c.Filter = &FilterClient{c}
@@ -80,7 +80,7 @@ func NewClient(endpoint, token, sync_token, cache_dir string, logger *log.Logger
 	return c, nil
 }
 
-func (c *Client) NewRequest(ctx context.Context, method, spath string, values url.Values) (*http.Request, error) {
+func (c *Client) newRequest(ctx context.Context, method, spath string, values url.Values) (*http.Request, error) {
 	u := *c.URL
 	u.Path = path.Join(c.URL.Path, spath)
 	values.Add("token", c.Token)
@@ -108,8 +108,8 @@ func (c *Client) NewRequest(ctx context.Context, method, spath string, values ur
 	return req, nil
 }
 
-func (c *Client) NewSyncRequest(ctx context.Context, values url.Values) (*http.Request, error) {
-	return c.NewRequest(ctx, http.MethodPost, "sync", values)
+func (c *Client) newSyncRequest(ctx context.Context, values url.Values) (*http.Request, error) {
+	return c.newRequest(ctx, http.MethodPost, "sync", values)
 }
 
 func decodeBody(resp *http.Response, out interface{}) error {
@@ -129,7 +129,7 @@ func (c *Client) Sync(ctx context.Context, commands []Command) error {
 		"resource_types":       {"[\"all\"]"},
 		"commands":             {string(b)},
 	}
-	req, err := c.NewSyncRequest(ctx, values)
+	req, err := c.newSyncRequest(ctx, values)
 	if err != nil {
 		return err
 	}
@@ -170,7 +170,7 @@ func (c *Client) ResetSyncToken() {
 
 func (c *Client) resetState() {
 	c.SyncToken = "*"
-	c.SyncState = &SyncState{}
+	c.syncState = &SyncState{}
 }
 
 func (c *Client) updateState(state *SyncState) {
@@ -189,17 +189,17 @@ func (c *Client) updateState(state *SyncState) {
 		cachedFilter := c.Filter.Resolve(filter.ID)
 		if cachedFilter == nil {
 			if !filter.IsDeleted {
-				c.SyncState.Filters = append(c.SyncState.Filters, filter)
+				c.syncState.Filters = append(c.syncState.Filters, filter)
 			}
 		} else {
 			if filter.IsDeleted {
 				var res []Filter
-				for _, f := range c.SyncState.Filters {
+				for _, f := range c.syncState.Filters {
 					if !f.Equal(cachedFilter) {
 						res = append(res, f)
 					}
 				}
-				c.SyncState.Filters = res
+				c.syncState.Filters = res
 			} else {
 				cachedFilter = &filter
 			}
@@ -209,17 +209,17 @@ func (c *Client) updateState(state *SyncState) {
 		cachedItem := c.Item.Resolve(item.ID)
 		if cachedItem == nil {
 			if !item.IsDeleted {
-				c.SyncState.Items = append(c.SyncState.Items, item)
+				c.syncState.Items = append(c.syncState.Items, item)
 			}
 		} else {
 			if item.IsDeleted {
 				var res []Item
-				for _, i := range c.SyncState.Items {
+				for _, i := range c.syncState.Items {
 					if !i.Equal(cachedItem) {
 						res = append(res, i)
 					}
 				}
-				c.SyncState.Items = res
+				c.syncState.Items = res
 			} else {
 				cachedItem = &item
 			}
@@ -229,17 +229,17 @@ func (c *Client) updateState(state *SyncState) {
 		cachedLabel := c.Label.Resolve(label.ID)
 		if cachedLabel == nil {
 			if !label.IsDeleted {
-				c.SyncState.Labels = append(c.SyncState.Labels, label)
+				c.syncState.Labels = append(c.syncState.Labels, label)
 			}
 		} else {
 			if label.IsDeleted {
 				var res []Label
-				for _, l := range c.SyncState.Labels {
+				for _, l := range c.syncState.Labels {
 					if !l.Equal(cachedLabel) {
 						res = append(res, l)
 					}
 				}
-				c.SyncState.Labels = res
+				c.syncState.Labels = res
 			} else {
 				cachedLabel = &label
 			}
@@ -249,23 +249,23 @@ func (c *Client) updateState(state *SyncState) {
 		cachedProject := c.Project.Resolve(project.ID)
 		if cachedProject == nil {
 			if !project.IsDeleted {
-				c.SyncState.Projects = append(c.SyncState.Projects, project)
+				c.syncState.Projects = append(c.syncState.Projects, project)
 			}
 		} else {
 			if project.IsDeleted {
 				var res []Project
-				for _, p := range c.SyncState.Projects {
+				for _, p := range c.syncState.Projects {
 					if !p.Equal(cachedProject) {
 						res = append(res, p)
 					}
 				}
-				c.SyncState.Projects = res
+				c.syncState.Projects = res
 			} else {
 				cachedProject = &project
 			}
 		}
 	}
-	c.SyncState = state
+	c.syncState = state
 }
 
 func (c *Client) readCache() error {
@@ -273,7 +273,7 @@ func (c *Client) readCache() error {
 	if err != nil {
 		return err
 	}
-	if err = json.Unmarshal(b, c.SyncState); err != nil {
+	if err = json.Unmarshal(b, c.syncState); err != nil {
 		return err
 	}
 	b, err = ioutil.ReadFile(path.Join(c.CacheDir, c.Token+".sync"))
@@ -288,7 +288,7 @@ func (c *Client) writeCache() error {
 	if len(c.CacheDir) == 0 {
 		return nil
 	}
-	b, err := json.MarshalIndent(c.SyncState, "", "  ")
+	b, err := json.MarshalIndent(c.syncState, "", "  ")
 	if err != nil {
 		return err
 	}

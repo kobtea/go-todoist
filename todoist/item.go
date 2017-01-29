@@ -41,7 +41,7 @@ func (c *ItemClient) Add(item Item) (*Item, error) {
 	}
 	item.ID = GenerateTempID()
 	// append item to sync state only `add` method?
-	c.SyncState.Items = append(c.SyncState.Items, item)
+	c.syncState.Items = append(c.syncState.Items, item)
 	command := Command{
 		Type:   "item_add",
 		Args:   item,
@@ -149,7 +149,7 @@ type ItemGetResponse struct {
 
 func (c *ItemClient) Get(ctx context.Context, id ID) (*ItemGetResponse, error) {
 	values := url.Values{"item_id": {id.String()}}
-	req, err := c.NewRequest(ctx, http.MethodGet, "items/get", values)
+	req, err := c.newRequest(ctx, http.MethodGet, "items/get", values)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +167,7 @@ func (c *ItemClient) Get(ctx context.Context, id ID) (*ItemGetResponse, error) {
 
 func (c *ItemClient) GetCompleted(ctx context.Context, projectID ID) (*[]Item, error) {
 	values := url.Values{"project_id": {projectID.String()}}
-	req, err := c.NewRequest(ctx, http.MethodGet, "items/get_completed", values)
+	req, err := c.newRequest(ctx, http.MethodGet, "items/get_completed", values)
 	if err != nil {
 		return nil, err
 	}

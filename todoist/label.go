@@ -24,7 +24,7 @@ func (c *LabelClient) Add(label Label) (*Label, error) {
 		return nil, errors.New("New label requires a name")
 	}
 	label.ID = GenerateTempID()
-	c.SyncState.Labels = append(c.SyncState.Labels, label)
+	c.syncState.Labels = append(c.syncState.Labels, label)
 	command := Command{
 		Type:   "label_add",
 		Args:   label,
@@ -66,7 +66,7 @@ type LabelGetResponse struct {
 
 func (c *LabelClient) Get(ctx context.Context, id ID) (*LabelGetResponse, error) {
 	values := url.Values{"label_id": {id.String()}}
-	req, err := c.NewRequest(ctx, http.MethodGet, "labels/get", values)
+	req, err := c.newRequest(ctx, http.MethodGet, "labels/get", values)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (c *LabelClient) Get(ctx context.Context, id ID) (*LabelGetResponse, error)
 }
 
 func (c *LabelClient) Resolve(id ID) *Label {
-	for _, label := range c.SyncState.Labels {
+	for _, label := range c.syncState.Labels {
 		if label.ID == id {
 			return &label
 		}

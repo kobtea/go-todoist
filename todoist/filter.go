@@ -28,7 +28,7 @@ func (c *FilterClient) Add(filter Filter) (*Filter, error) {
 		return nil, errors.New("New filter requires a query")
 	}
 	filter.ID = GenerateTempID()
-	c.SyncState.Filters = append(c.SyncState.Filters, filter)
+	c.syncState.Filters = append(c.syncState.Filters, filter)
 	command := Command{
 		Type:   "filter_add",
 		Args:   filter,
@@ -70,7 +70,7 @@ type FilterGetResponse struct {
 
 func (c *FilterClient) Get(ctx context.Context, id ID) (*FilterGetResponse, error) {
 	values := url.Values{"filter_id": {id.String()}}
-	req, err := c.NewRequest(ctx, http.MethodGet, "filters/get", values)
+	req, err := c.newRequest(ctx, http.MethodGet, "filters/get", values)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func (c *FilterClient) Get(ctx context.Context, id ID) (*FilterGetResponse, erro
 }
 
 func (c *FilterClient) Resolve(id ID) *Filter {
-	for _, filter := range c.SyncState.Filters {
+	for _, filter := range c.syncState.Filters {
 		if filter.ID == id {
 			return &filter
 		}
