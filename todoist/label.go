@@ -17,6 +17,7 @@ type Label struct {
 
 type LabelClient struct {
 	*Client
+	cache *labelCache
 }
 
 func (c *LabelClient) Add(label Label) (*Label, error) {
@@ -24,7 +25,7 @@ func (c *LabelClient) Add(label Label) (*Label, error) {
 		return nil, errors.New("New label requires a name")
 	}
 	label.ID = GenerateTempID()
-	c.syncState.Labels = append(c.syncState.Labels, label)
+	c.cache.store(label)
 	command := Command{
 		Type:   "label_add",
 		Args:   label,
@@ -82,11 +83,52 @@ func (c *LabelClient) Get(ctx context.Context, id ID) (*LabelGetResponse, error)
 	return &out, nil
 }
 
+func (c *LabelClient) GetAll() []Label {
+	return c.cache.getAll()
+}
+
 func (c *LabelClient) Resolve(id ID) *Label {
-	for _, label := range c.syncState.Labels {
+	return c.cache.resolve(id)
+}
+
+type labelCache struct {
+	cache *[]Label
+}
+
+func (c *labelCache) getAll() []Label {
+	return *c.cache
+}
+
+func (c *labelCache) resolve(id ID) *Label {
+	for _, label := range *c.cache {
 		if label.ID == id {
 			return &label
 		}
 	}
 	return nil
+}
+
+func (c *labelCache) store(label Label) {
+	old := c.resolve(label.ID)
+	if old == nil {
+		if !label.IsDeleted {
+			*c.cache = append(*c.cache, label)
+		}
+	} else {
+		if label.IsDeleted {
+			c.remove(label)
+		} else {
+			old = &label
+		}
+	}
+}
+
+func (c *labelCache) remove(label Label) {
+	var res []Label
+	for _, p := range *c.cache {
+		if !p.Equal(label) {
+			res = append(res, p)
+		}
+	}
+	c.cache = &res
 }

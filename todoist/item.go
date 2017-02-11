@@ -33,6 +33,7 @@ type Item struct {
 
 type ItemClient struct {
 	*Client
+	cache *itemCache
 }
 
 func (c *ItemClient) Add(item Item) (*Item, error) {
@@ -41,7 +42,7 @@ func (c *ItemClient) Add(item Item) (*Item, error) {
 	}
 	item.ID = GenerateTempID()
 	// append item to sync state only `add` method?
-	c.syncState.Items = append(c.syncState.Items, item)
+	c.cache.store(item)
 	command := Command{
 		Type:   "item_add",
 		Args:   item,
@@ -183,11 +184,54 @@ func (c *ItemClient) GetCompleted(ctx context.Context, projectID ID) (*[]Item, e
 	return &out, nil
 }
 
+func (c *ItemClient) GetAll() []Item {
+	return c.cache.getAll()
+}
+
 func (c *ItemClient) Resolve(id ID) *Item {
-	for _, item := range c.SyncState.Items {
+	return c.cache.resolve(id)
+}
+
+type itemCache struct {
+	cache *[]Item
+}
+
+func (c *itemCache) getAll() []Item {
+	return *c.cache
+}
+
+func (c *itemCache) resolve(id ID) *Item {
+	for _, item := range *c.cache {
 		if item.ID == id {
 			return &item
 		}
 	}
 	return nil
+}
+
+func (c *itemCache) store(item Item) {
+	old := c.resolve(item.ID)
+	// sync api do not returns deleted items.
+	// so remove deleted items from cache too.
+	if old == nil {
+		if !item.IsDeleted {
+			*c.cache = append(*c.cache, item)
+		}
+	} else {
+		if item.IsDeleted {
+			c.remove(item)
+		} else {
+			old = &item
+		}
+	}
+}
+
+func (c *itemCache) remove(item Item) {
+	var res []Item
+	for _, i := range *c.cache {
+		if !i.Equal(item) {
+			res = append(res, i)
+		}
+	}
+	c.cache = &res
 }

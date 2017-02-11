@@ -23,6 +23,7 @@ type Project struct {
 
 type ProjectClient struct {
 	*Client
+	cache *projectCache
 }
 
 func (c *ProjectClient) Add(project Project) (*Project, error) {
@@ -30,7 +31,7 @@ func (c *ProjectClient) Add(project Project) (*Project, error) {
 		return nil, errors.New("New project requires a name")
 	}
 	project.ID = GenerateTempID()
-	c.syncState.Projects = append(c.syncState.Projects, project)
+	c.cache.store(project)
 	command := Command{
 		Type:   "project_add",
 		Args:   project,
@@ -154,11 +155,52 @@ func (c *ProjectClient) GetArchived(ctx context.Context) (*[]Project, error) {
 	return &out, nil
 }
 
+func (c *ProjectClient) GetAll() []Project {
+	return c.cache.getAll()
+}
+
 func (c *ProjectClient) Resolve(id ID) *Project {
-	for _, project := range c.syncState.Projects {
+	return c.cache.resolve(id)
+}
+
+type projectCache struct {
+	cache *[]Project
+}
+
+func (c *projectCache) getAll() []Project {
+	return *c.cache
+}
+
+func (c *projectCache) resolve(id ID) *Project {
+	for _, project := range *c.cache {
 		if project.ID == id {
 			return &project
 		}
 	}
 	return nil
+}
+
+func (c *projectCache) store(project Project) {
+	old := c.resolve(project.ID)
+	if old == nil {
+		if !project.IsDeleted {
+			*c.cache = append(*c.cache, project)
+		}
+	} else {
+		if project.IsDeleted {
+			c.remove(project)
+		} else {
+			old = &project
+		}
+	}
+}
+
+func (c *projectCache) remove(project Project) {
+	var res []Project
+	for _, p := range *c.cache {
+		if !p.Equal(project) {
+			res = append(res, p)
+		}
+	}
+	c.cache = &res
 }

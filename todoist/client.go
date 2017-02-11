@@ -70,13 +70,13 @@ func NewClient(endpoint, token, sync_token, cache_dir string, logger *log.Logger
 		syncState:  &SyncState{},
 		Logger:     logger,
 	}
-	c.Filter = &FilterClient{c}
-	c.Item = &ItemClient{c}
-	c.Label = &LabelClient{c}
-	c.Project = &ProjectClient{c}
 	if err = c.readCache(); err != nil {
 		c.resetState()
 	}
+	c.Filter = &FilterClient{c, &filterCache{&c.syncState.Filters}}
+	c.Item = &ItemClient{c, &itemCache{&c.syncState.Items}}
+	c.Label = &LabelClient{c, &labelCache{&c.syncState.Labels}}
+	c.Project = &ProjectClient{c, &projectCache{&c.syncState.Projects}}
 	return c, nil
 }
 
@@ -186,84 +186,16 @@ func (c *Client) updateState(state *SyncState) {
 	- user
 	*/
 	for _, filter := range state.Filters {
-		cachedFilter := c.Filter.Resolve(filter.ID)
-		if cachedFilter == nil {
-			if !filter.IsDeleted {
-				c.syncState.Filters = append(c.syncState.Filters, filter)
-			}
-		} else {
-			if filter.IsDeleted {
-				var res []Filter
-				for _, f := range c.syncState.Filters {
-					if !f.Equal(cachedFilter) {
-						res = append(res, f)
-					}
-				}
-				c.syncState.Filters = res
-			} else {
-				cachedFilter = &filter
-			}
-		}
+		c.Filter.cache.store(filter)
 	}
 	for _, item := range state.Items {
-		cachedItem := c.Item.Resolve(item.ID)
-		if cachedItem == nil {
-			if !item.IsDeleted {
-				c.syncState.Items = append(c.syncState.Items, item)
-			}
-		} else {
-			if item.IsDeleted {
-				var res []Item
-				for _, i := range c.syncState.Items {
-					if !i.Equal(cachedItem) {
-						res = append(res, i)
-					}
-				}
-				c.syncState.Items = res
-			} else {
-				cachedItem = &item
-			}
-		}
+		c.Item.cache.store(item)
 	}
 	for _, label := range state.Labels {
-		cachedLabel := c.Label.Resolve(label.ID)
-		if cachedLabel == nil {
-			if !label.IsDeleted {
-				c.syncState.Labels = append(c.syncState.Labels, label)
-			}
-		} else {
-			if label.IsDeleted {
-				var res []Label
-				for _, l := range c.syncState.Labels {
-					if !l.Equal(cachedLabel) {
-						res = append(res, l)
-					}
-				}
-				c.syncState.Labels = res
-			} else {
-				cachedLabel = &label
-			}
-		}
+		c.Label.cache.store(label)
 	}
 	for _, project := range state.Projects {
-		cachedProject := c.Project.Resolve(project.ID)
-		if cachedProject == nil {
-			if !project.IsDeleted {
-				c.syncState.Projects = append(c.syncState.Projects, project)
-			}
-		} else {
-			if project.IsDeleted {
-				var res []Project
-				for _, p := range c.syncState.Projects {
-					if !p.Equal(cachedProject) {
-						res = append(res, p)
-					}
-				}
-				c.syncState.Projects = res
-			} else {
-				cachedProject = &project
-			}
-		}
+		c.Project.cache.store(project)
 	}
 	c.syncState = state
 }
