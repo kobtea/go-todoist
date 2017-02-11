@@ -34,6 +34,9 @@ func (i ID) MarshalJSON() ([]byte, error) {
 	if IsTempID(i) {
 		s = `"` + s + `"`
 	}
+	if s == "0" {
+		s = "null"
+	}
 	return []byte(s), nil
 }
 
@@ -41,6 +44,9 @@ func (i *ID) UnmarshalJSON(b []byte) (err error) {
 	s, err := strconv.Unquote(string(b))
 	if err != nil {
 		s = string(b) // integer id
+	}
+	if s == "null" {
+		s = "0"
 	}
 	id, err := NewID(s)
 	if err != nil {

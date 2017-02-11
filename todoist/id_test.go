@@ -52,6 +52,11 @@ func TestID_MarshalJSON(t *testing.T) {
 	if err != nil || string(b) != strconv.Quote(test.s) {
 		t.Errorf("Expect %s, but got %s", strconv.Quote(test.s), string(b))
 	}
+
+	b, err = ID("0").MarshalJSON()
+	if err != nil || string(b) != "null" {
+		t.Errorf("Expect %s, but got %s", strconv.Quote(test.s), string(b))
+	}
 }
 
 func TestID_UnmarshalJSON(t *testing.T) {
@@ -61,8 +66,16 @@ func TestID_UnmarshalJSON(t *testing.T) {
 		if !reflect.DeepEqual(err, test.e) {
 			t.Errorf("Expect %s, but got %s", test.e, err)
 		} else if test.e == nil && v != test.v {
-
+			t.Errorf("Expect %s, but got %s", test.v, v)
 		}
+	}
+	var v ID
+	err := v.UnmarshalJSON([]byte("null"))
+	if err != nil {
+		t.Errorf("Unexpect error: %s", err)
+	}
+	if v != ID("0") {
+		t.Errorf("Expect %s, but got %s", ID("0"), v)
 	}
 }
 
