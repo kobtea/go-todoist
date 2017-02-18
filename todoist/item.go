@@ -15,7 +15,7 @@ type Item struct {
 	Content        string `json:"content"`
 	DateString     string `json:"date_string,omitempty"`
 	DateLang       string `json:"date_lang,omitempty"`
-	DueDateUtc     string `json:"due_date_utc,omitempty"`
+	DueDateUtc     Time   `json:"due_date_utc,omitempty"`
 	Priority       int    `json:"priority,omitempty"`
 	Indent         int    `json:"indent,omitempty"`
 	ItemOrder      int    `json:"item_order,omitempty"`
@@ -28,7 +28,7 @@ type Item struct {
 	InHistory      int    `json:"in_history,omitempty"`
 	IsArchived     int    `json:"is_archived,omitempty"`
 	SyncID         int    `json:"sync_id,omitempty"`
-	DateAdded      string `json:"date_added,omitempty"`
+	DateAdded      Time   `json:"date_added,omitempty"`
 }
 
 type ItemClient struct {

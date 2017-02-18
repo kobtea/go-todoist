@@ -8,7 +8,7 @@ type Reminder struct {
 	Type       string `json:"type"`
 	DateString string `json:"date_string"`
 	DateLang   string `json:"date_lang"`
-	DueDateUtc string `json:"due_date_utc"`
+	DueDateUtc Time   `json:"due_date_utc"`
 	MmOffset   int    `json:"mm_offset"`
 	Name       string `json:"name"`
 	LocLat     string `json:"loc_lat"`

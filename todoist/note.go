@@ -13,7 +13,7 @@ type Note struct {
 		FileURL     string `json:"file_url"`
 		UploadState string `json:"upload_state"`
 	} `json:"file_attachment"`
-	UIDsToNotify []ID   `json:"uids_to_notify"`
-	IsArchived   int    `json:"is_archived"`
-	Posted       string `json:"posted"`
+	UIDsToNotify []ID `json:"uids_to_notify"`
+	IsArchived   int  `json:"is_archived"`
+	Posted       Time `json:"posted"`
 }
