@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 type Item struct {
@@ -29,6 +30,10 @@ type Item struct {
 	IsArchived     int    `json:"is_archived,omitempty"`
 	SyncID         int    `json:"sync_id,omitempty"`
 	DateAdded      Time   `json:"date_added,omitempty"`
+}
+
+func (i Item) IsOverDueDate() bool {
+	return i.DueDateUtc.Before(Time{time.Now().UTC()})
 }
 
 type ItemClient struct {

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/fatih/color"
 	"github.com/kobtea/go-todoist/todoist"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
@@ -8,7 +9,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // todayCmd represents the today command
@@ -25,7 +25,7 @@ var todayCmd = &cobra.Command{
 			return items[i].DueDateUtc.Before(items[j].DueDateUtc)
 		})
 		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"due", "id", "date", "pri", "project", "labels", "content"})
+		table.SetHeader([]string{"id", "date", "pri", "project", "labels", "content"})
 		table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
 		for _, i := range items {
 			var project string
@@ -38,16 +38,13 @@ var todayCmd = &cobra.Command{
 					labels = append(labels, j.String())
 				}
 			}
-			var d string
-			if i.DueDateUtc.Before(todoist.Time{time.Now().UTC()}) {
-				d = "overdue"
-			} else {
-				d = "today"
+			date := i.DateString
+			if i.IsOverDueDate() {
+				date = color.New(color.BgRed).SprintFunc()(date)
 			}
 			table.Append([]string{
-				d,
 				i.ID.String(),
-				i.DateString,
+				date,
 				strconv.Itoa(i.Priority),
 				project,
 				strings.Join(labels, " "),
