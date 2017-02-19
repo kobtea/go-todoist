@@ -15,6 +15,10 @@ type Label struct {
 	ItemOrder int    `json:"item_order"`
 }
 
+func (l Label) String() string {
+	return "@" + l.Name
+}
+
 type LabelClient struct {
 	*Client
 	cache *labelCache

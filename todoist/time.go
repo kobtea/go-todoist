@@ -12,6 +12,18 @@ type Time struct {
 	time.Time
 }
 
+func Today() Time {
+	now := time.Now()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 1, time.Local)
+	return Time{today.UTC()}
+}
+
+func Next7Days() Time {
+	d := time.Now().Add(6 * 24 * time.Hour)
+	days := time.Date(d.Year(), d.Month(), d.Day(), 23, 59, 59, 1, time.Local)
+	return Time{days.UTC()}
+}
+
 func Parse(value string) (Time, error) {
 	t, err := time.Parse(layout, value)
 	if err != nil {
@@ -22,6 +34,14 @@ func Parse(value string) (Time, error) {
 
 func (t Time) Equal(u Time) bool {
 	return t.Time.Equal(u.Time)
+}
+
+func (t Time) Before(u Time) bool {
+	return t.Time.Before(u.Time)
+}
+
+func (t Time) After(u Time) bool {
+	return t.Time.After(u.Time)
 }
 
 func (t Time) MarshalJSON() ([]byte, error) {

@@ -21,7 +21,7 @@ type Item struct {
 	ItemOrder      int    `json:"item_order,omitempty"`
 	DayOrder       int    `json:"day_order,omitempty"`
 	Collapsed      int    `json:"collapsed,omitempty"`
-	Labels         []int  `json:"labels,omitempty"`
+	Labels         []ID   `json:"labels,omitempty"`
 	AssignedByUID  ID     `json:"assigned_by_uid,omitempty"`
 	ResponsibleUID ID     `json:"responsible_uid,omitempty"`
 	Checked        int    `json:"checked,omitempty"`
@@ -190,6 +190,16 @@ func (c *ItemClient) GetAll() []Item {
 
 func (c *ItemClient) Resolve(id ID) *Item {
 	return c.cache.resolve(id)
+}
+
+func (c ItemClient) FindByDueDate(time Time) []Item {
+	var res []Item
+	for _, i := range c.GetAll() {
+		if !i.DueDateUtc.IsZero() && i.DueDateUtc.Before(time) {
+			res = append(res, i)
+		}
+	}
+	return res
 }
 
 type itemCache struct {

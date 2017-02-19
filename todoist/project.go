@@ -21,6 +21,10 @@ type Project struct {
 	TeamInbox    bool   `json:"team_inbox"`
 }
 
+func (p Project) String() string {
+	return "#" + p.Name
+}
+
 type ProjectClient struct {
 	*Client
 	cache *projectCache
