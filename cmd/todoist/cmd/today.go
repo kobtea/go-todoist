@@ -1,11 +1,10 @@
 package cmd
 
 import (
-	"github.com/fatih/color"
+	"fmt"
+	"github.com/kobtea/go-todoist/cmd/util"
 	"github.com/kobtea/go-todoist/todoist"
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
-	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -24,9 +23,7 @@ var todayCmd = &cobra.Command{
 		sort.Slice(items, func(i, j int) bool {
 			return items[i].DueDateUtc.Before(items[j].DueDateUtc)
 		})
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"id", "date", "pri", "project", "labels", "content"})
-		table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
+		var rows [][]string
 		for _, i := range items {
 			var project string
 			if p := client.Project.Resolve(i.ProjectID); p != nil {
@@ -38,21 +35,16 @@ var todayCmd = &cobra.Command{
 					labels = append(labels, j.String())
 				}
 			}
-			date := i.DateString
-			if i.IsOverDueDate() {
-				date = color.New(color.BgRed).SprintFunc()(date)
-			}
-			table.Append([]string{
+			rows = append(rows, []string{
 				i.ID.String(),
-				date,
+				i.DueDateUtc.Local().ColorShortString(),
 				strconv.Itoa(i.Priority),
 				project,
 				strings.Join(labels, " "),
 				i.Content,
 			})
-
 		}
-		table.Render()
+		fmt.Println(util.TableString(rows))
 		return nil
 	},
 }

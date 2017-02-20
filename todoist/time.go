@@ -1,6 +1,7 @@
 package todoist
 
 import (
+	"github.com/fatih/color"
 	"strconv"
 	"time"
 )
@@ -44,6 +45,10 @@ func (t Time) After(u Time) bool {
 	return t.Time.After(u.Time)
 }
 
+func (t Time) Local() Time {
+	return Time{t.Time.Local()}
+}
+
 func (t Time) MarshalJSON() ([]byte, error) {
 	if t.IsZero() {
 		return []byte("null"), nil
@@ -64,9 +69,16 @@ func (t *Time) UnmarshalJSON(b []byte) (err error) {
 	return nil
 }
 
-func (t *Time) ShortString() string {
+func (t Time) ShortString() string {
 	if t.IsZero() {
 		return ""
 	}
 	return t.Time.Local().Format(shortLayout)
+}
+
+func (t Time) ColorShortString() string {
+	if !t.IsZero() && t.Before(Time{time.Now()}) {
+		return color.New(color.BgRed).Sprint(t.ShortString())
+	}
+	return t.ShortString()
 }
