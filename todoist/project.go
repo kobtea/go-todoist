@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/stretchr/goweb/http"
 	"net/url"
 )
@@ -23,6 +24,29 @@ type Project struct {
 
 func (p Project) String() string {
 	return "#" + p.Name
+}
+
+func (p Project) ColorString() string {
+	var attr color.Attribute
+	switch p.Color {
+	case 20, 21:
+		attr = color.FgHiBlack
+	case 1, 8, 14:
+		attr = color.FgHiRed
+	case 0, 15, 16:
+		attr = color.FgHiGreen
+	case 2, 3, 9:
+		attr = color.FgHiYellow
+	case 17, 18, 19:
+		attr = color.FgHiBlue
+	case 6, 12, 13:
+		attr = color.FgHiMagenta
+	case 4, 10, 11:
+		attr = color.FgHiCyan
+	case 5, 7:
+		attr = color.FgWhite
+	}
+	return color.New(attr).Sprint(p.String())
 }
 
 type ProjectClient struct {

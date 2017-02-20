@@ -7,7 +7,7 @@ import (
 )
 
 const layout = "Mon 2 Jan 2006 15:04:05 -0700"
-const shortLayout = "2006-01-02(Mon) 15:04"
+const localLayout = "2006-01-02(Mon) 15:04"
 
 type Time struct {
 	time.Time
@@ -69,16 +69,16 @@ func (t *Time) UnmarshalJSON(b []byte) (err error) {
 	return nil
 }
 
-func (t Time) ShortString() string {
+func (t Time) String() string {
 	if t.IsZero() {
 		return ""
 	}
-	return t.Time.Local().Format(shortLayout)
+	return t.Time.Local().Format(localLayout)
 }
 
-func (t Time) ColorShortString() string {
+func (t Time) ColorString() string {
 	if !t.IsZero() && t.Before(Time{time.Now()}) {
-		return color.New(color.BgRed).Sprint(t.ShortString())
+		return color.New(color.BgRed).Sprint(t.String())
 	}
-	return t.ShortString()
+	return t.String()
 }

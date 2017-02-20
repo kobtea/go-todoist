@@ -23,3 +23,24 @@ func (i *IntBool) UnmarshalJSON(b []byte) (err error) {
 	}
 	return nil
 }
+
+type ColorStringer interface {
+	String() string
+	ColorString() string
+}
+
+type NoColorString struct {
+	s string
+}
+
+func NewNoColorString(s string) NoColorString {
+	return NoColorString{s}
+}
+
+func (n NoColorString) String() string {
+	return n.s
+}
+
+func (n NoColorString) ColorString() string {
+	return n.s
+}
