@@ -23,11 +23,11 @@ var todayCmd = &cobra.Command{
 		sort.Slice(items, func(i, j int) bool {
 			return items[i].DueDateUtc.Before(items[j].DueDateUtc)
 		})
-		var rows [][]string
+		var rows [][]todoist.ColorStringer
 		for _, i := range items {
-			var project string
+			var project todoist.Project
 			if p := client.Project.Resolve(i.ProjectID); p != nil {
-				project = p.String()
+				project = *p
 			}
 			var labels []string
 			for _, l := range i.Labels {
@@ -35,13 +35,13 @@ var todayCmd = &cobra.Command{
 					labels = append(labels, j.String())
 				}
 			}
-			rows = append(rows, []string{
-				i.ID.String(),
-				i.DueDateUtc.Local().ColorShortString(),
-				strconv.Itoa(i.Priority),
+			rows = append(rows, []todoist.ColorStringer{
+				todoist.NewNoColorString(i.ID.String()),
+				i.DueDateUtc,
+				todoist.NewNoColorString(strconv.Itoa(i.Priority)),
 				project,
-				strings.Join(labels, " "),
-				i.Content,
+				todoist.NewNoColorString(strings.Join(labels, " ")),
+				todoist.NewNoColorString(i.Content),
 			})
 		}
 		fmt.Println(util.TableString(rows))

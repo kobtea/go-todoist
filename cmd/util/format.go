@@ -1,6 +1,7 @@
 package util
 
 import (
+	"github.com/kobtea/go-todoist/todoist"
 	"github.com/mattn/go-runewidth"
 	"regexp"
 	"strconv"
@@ -11,7 +12,7 @@ func StringWidthWithoutColor(s string) int {
 	return runewidth.StringWidth(re.ReplaceAllString(s, ""))
 }
 
-func TableString(rows [][]string) string {
+func TableString(rows [][]todoist.ColorStringer) string {
 	if len(rows) == 0 {
 		return ""
 	}
@@ -25,8 +26,7 @@ func TableString(rows [][]string) string {
 	lens := make([]int, min)
 	for _, ss := range rows {
 		for i := 0; i < len(lens); i++ {
-			// FIXME: regex may be slow
-			l := StringWidthWithoutColor(ss[i])
+			l := runewidth.StringWidth(ss[i].String())
 			if l > lens[i] {
 				lens[i] = l
 			}
@@ -37,10 +37,11 @@ func TableString(rows [][]string) string {
 	for i := 0; i < len(rows); i++ {
 		for j := 0; j < len(lens); j++ {
 			f := runewidth.FillRight
-			if _, err := strconv.Atoi(rows[i][j]); err == nil {
+			if _, err := strconv.Atoi(rows[i][j].String()); err == nil {
 				f = runewidth.FillLeft
 			}
-			res += f(rows[i][j], lens[j])
+			colorSeqLen := runewidth.StringWidth(rows[i][j].ColorString()) - runewidth.StringWidth(rows[i][j].String())
+			res += f(rows[i][j].ColorString(), lens[j]+colorSeqLen)
 			if j < len(lens)-1 {
 				res += " "
 			}
