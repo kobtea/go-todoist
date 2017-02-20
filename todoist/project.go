@@ -44,6 +44,7 @@ func (p Project) ColorString() string {
 	case 4, 10, 11:
 		attr = color.FgHiCyan
 	case 5, 7:
+	default:
 		attr = color.FgWhite
 	}
 	return color.New(attr).Sprint(p.String())
