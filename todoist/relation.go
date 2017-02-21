@@ -4,14 +4,14 @@ type RelationClient struct {
 	*Client
 }
 
-type Relations struct {
+type ItemRelations struct {
 	//Users map[ID]User
 	Projects map[ID]Project
 	Labels   map[ID]Label
 }
 
-func (c RelationClient) Items(items []Item) Relations {
-	res := Relations{Projects: map[ID]Project{}, Labels: map[ID]Label{}}
+func (c RelationClient) Items(items []Item) ItemRelations {
+	res := ItemRelations{Projects: map[ID]Project{}, Labels: map[ID]Label{}}
 	for _, item := range items {
 		if _, ok := res.Projects[item.ProjectID]; !ok {
 			p := c.Project.Resolve(item.ProjectID)

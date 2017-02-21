@@ -5,6 +5,7 @@ import (
 	"github.com/mattn/go-runewidth"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 func StringWidthWithoutColor(s string) int {
@@ -51,4 +52,29 @@ func TableString(rows [][]todoist.ColorStringer) string {
 		}
 	}
 	return res
+}
+
+func ItemTableString(items []todoist.Item, relations todoist.ItemRelations) string {
+	var rows [][]todoist.ColorStringer
+	for _, i := range items {
+		project := todoist.Project{}
+		if v, ok := relations.Projects[i.ProjectID]; ok {
+			project = v
+		}
+		labels := []string{}
+		for _, lid := range i.Labels {
+			if v, ok := relations.Labels[lid]; ok {
+				labels = append(labels, v.String())
+			}
+		}
+		rows = append(rows, []todoist.ColorStringer{
+			todoist.NewNoColorString(i.ID.String()),
+			i.DueDateUtc,
+			todoist.NewNoColorString(strconv.Itoa(i.Priority)),
+			project,
+			todoist.NewNoColorString(strings.Join(labels, " ")),
+			todoist.NewNoColorString(i.Content),
+		})
+	}
+	return TableString(rows)
 }
