@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -195,6 +196,16 @@ func (c *ItemClient) GetAll() []Item {
 
 func (c *ItemClient) Resolve(id ID) *Item {
 	return c.cache.resolve(id)
+}
+
+func (c ItemClient) FindByContent(substr string) []Item {
+	var res []Item
+	for _, i := range c.GetAll() {
+		if strings.Contains(i.Content, substr) {
+			res = append(res, i)
+		}
+	}
+	return res
 }
 
 func (c ItemClient) FindByDueDate(time Time) []Item {
