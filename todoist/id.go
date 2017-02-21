@@ -34,7 +34,7 @@ func (i ID) MarshalJSON() ([]byte, error) {
 	if IsTempID(i) {
 		s = `"` + s + `"`
 	}
-	if s == "0" {
+	if s == "0" || s == "" {
 		s = "null"
 	}
 	return []byte(s), nil

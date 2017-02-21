@@ -62,7 +62,39 @@ var itemAddCmd = &cobra.Command{
 		})
 		syncedItem := items[len(items)-1]
 		relations := client.Relation.Items([]todoist.Item{syncedItem})
+		fmt.Println("Successful addition of an item.")
 		fmt.Println(util.ItemTableString([]todoist.Item{syncedItem}, relations))
+		return nil
+	},
+}
+
+var itemCompleteCmd = &cobra.Command{
+	Use:   "complete",
+	Short: "complete items",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		var ids []todoist.ID
+		for _, s := range args {
+			id, err := todoist.NewID(s)
+			if err != nil {
+				return fmt.Errorf("Invalid ID: %s", s)
+			}
+			ids = append(ids, id)
+		}
+		client, err := newClient()
+		if err != nil {
+			return err
+		}
+		if err = client.Item.Complete(ids, true); err != nil {
+			return err
+		}
+		ctx := context.Background()
+		if err = client.Commit(ctx); err != nil {
+			return err
+		}
+		if err = client.FullSync(ctx, []todoist.Command{}); err != nil {
+			return err
+		}
+		fmt.Println("Successful completion of item(s).")
 		return nil
 	},
 }
@@ -71,4 +103,5 @@ func init() {
 	RootCmd.AddCommand(itemCmd)
 	itemCmd.AddCommand(itemListCmd)
 	itemCmd.AddCommand(itemAddCmd)
+	itemCmd.AddCommand(itemCompleteCmd)
 }
