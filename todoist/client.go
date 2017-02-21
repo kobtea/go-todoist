@@ -25,6 +25,7 @@ type Client struct {
 	Item       *ItemClient
 	Label      *LabelClient
 	Project    *ProjectClient
+	Relation   *RelationClient
 	queue      []Command
 }
 
@@ -77,6 +78,7 @@ func NewClient(endpoint, token, sync_token, cache_dir string, logger *log.Logger
 	c.Item = &ItemClient{c, &itemCache{&c.syncState.Items}}
 	c.Label = &LabelClient{c, &labelCache{&c.syncState.Labels}}
 	c.Project = &ProjectClient{c, &projectCache{&c.syncState.Projects}}
+	c.Relation = &RelationClient{c}
 	return c, nil
 }
 

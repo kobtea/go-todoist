@@ -23,16 +23,17 @@ var todayCmd = &cobra.Command{
 		sort.Slice(items, func(i, j int) bool {
 			return items[i].DueDateUtc.Before(items[j].DueDateUtc)
 		})
+		relations := client.Relation.Items(items)
 		var rows [][]todoist.ColorStringer
 		for _, i := range items {
-			var project todoist.Project
-			if p := client.Project.Resolve(i.ProjectID); p != nil {
-				project = *p
+			project := todoist.Project{}
+			if v, ok := relations.Projects[i.ProjectID]; ok {
+				project = v
 			}
-			var labels []string
-			for _, l := range i.Labels {
-				if j := client.Label.Resolve(l); j != nil {
-					labels = append(labels, j.String())
+			labels := []string{}
+			for _, lid := range i.Labels {
+				if v, ok := relations.Labels[lid]; ok {
+					labels = append(labels, v.String())
 				}
 			}
 			rows = append(rows, []todoist.ColorStringer{
