@@ -4,6 +4,7 @@ import (
 	"github.com/kobtea/go-todoist/todoist"
 	"github.com/mattn/go-runewidth"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -74,6 +75,20 @@ func ItemTableString(items []todoist.Item, relations todoist.ItemRelations) stri
 			project,
 			todoist.NewNoColorString(strings.Join(labels, " ")),
 			todoist.NewNoColorString(i.Content),
+		})
+	}
+	return TableString(rows)
+}
+
+func ProjectTableString(projects []todoist.Project) string {
+	sort.Slice(projects, func(i, j int) bool {
+		return projects[i].ItemOrder < projects[j].ItemOrder
+	})
+	var rows [][]todoist.ColorStringer
+	for _, p := range projects {
+		rows = append(rows, []todoist.ColorStringer{
+			todoist.NewNoColorString(p.ID.String()),
+			todoist.NewNoColorString(strings.Repeat(" ", p.Indent-1) + p.ColorString()),
 		})
 	}
 	return TableString(rows)
