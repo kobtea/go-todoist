@@ -88,7 +88,7 @@ func ProjectTableString(projects []todoist.Project) string {
 	for _, p := range projects {
 		rows = append(rows, []todoist.ColorStringer{
 			todoist.NewNoColorString(p.ID.String()),
-			todoist.NewNoColorString(strings.Repeat(" ", p.Indent-1) + p.ColorString()),
+			p,
 		})
 	}
 	return TableString(rows)

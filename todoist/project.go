@@ -7,6 +7,7 @@ import (
 	"github.com/fatih/color"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 type Project struct {
@@ -23,7 +24,7 @@ type Project struct {
 }
 
 func (p Project) String() string {
-	return "#" + p.Name
+	return strings.Repeat(" ", p.Indent-1) + "#" + p.Name
 }
 
 func (p Project) ColorString() string {
