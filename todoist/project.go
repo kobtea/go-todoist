@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/stretchr/goweb/http"
+	"net/http"
 	"net/url"
 )
 
