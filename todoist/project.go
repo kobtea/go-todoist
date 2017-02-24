@@ -193,6 +193,16 @@ func (c *ProjectClient) Resolve(id ID) *Project {
 	return c.cache.resolve(id)
 }
 
+func (c ProjectClient) FindByName(substr string) []Project {
+	var res []Project
+	for _, p := range c.GetAll() {
+		if strings.Contains(p.Name, substr) {
+			res = append(res, p)
+		}
+	}
+	return res
+}
+
 type projectCache struct {
 	cache *[]Project
 }
