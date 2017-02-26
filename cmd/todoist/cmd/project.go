@@ -7,7 +7,13 @@ import (
 	"github.com/kobtea/go-todoist/cmd/util"
 	"github.com/kobtea/go-todoist/todoist"
 	"github.com/spf13/cobra"
+	"strconv"
 	"strings"
+)
+
+var (
+	projectColor  string
+	projectIndent string
 )
 
 // projectCmd represents the project command
@@ -39,18 +45,22 @@ var projectAddCmd = &cobra.Command{
 			return err
 		}
 		name := strings.Join(args, " ")
-		color, err := cmd.Flags().GetInt("color")
-		if err != nil {
-			return err
-		}
-		indent, err := cmd.Flags().GetInt("indent")
-		if err != nil {
-			return err
-		}
 		project := todoist.Project{
-			Name:   name,
-			Color:  color,
-			Indent: indent,
+			Name: name,
+		}
+		if len(projectColor) > 0 {
+			color, err := strconv.Atoi(projectColor)
+			if err != nil {
+				return fmt.Errorf("Invalid project color: %s", projectColor)
+			}
+			project.Color = color
+		}
+		if len(projectIndent) > 0 {
+			i, err := strconv.Atoi(projectIndent)
+			if err != nil {
+				return fmt.Errorf("Invalid project indent: %s", projectIndent)
+			}
+			project.Indent = i
 		}
 		if _, err = client.Project.Add(project); err != nil {
 			return err
@@ -74,9 +84,69 @@ var projectAddCmd = &cobra.Command{
 	},
 }
 
+var projectUpdateCmd = &cobra.Command{
+	Use:   "update id [new_name]",
+	Short: "update projects",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			return errors.New("Require project ID to update")
+		}
+		id, err := todoist.NewID(args[0])
+		if err != nil {
+			return fmt.Errorf("Invalid ID: %s", args[0])
+		}
+		client, err := newClient()
+		if err != nil {
+			return err
+		}
+		project := client.Project.Resolve(id)
+		if project == nil {
+			return fmt.Errorf("No such project id: %s", id)
+		}
+		if len(args) > 1 {
+			project.Name = strings.Join(args[1:], " ")
+		}
+		if len(projectColor) > 0 {
+			color, err := strconv.Atoi(projectColor)
+			if err != nil {
+				return fmt.Errorf("Invalid project color: %s", projectColor)
+			}
+			project.Color = color
+		}
+		if len(projectIndent) > 0 {
+			i, err := strconv.Atoi(projectIndent)
+			if err != nil {
+				return fmt.Errorf("Invalid project indent: %s", projectIndent)
+			}
+			project.Indent = i
+		}
+		if _, err = client.Project.Update(*project); err != nil {
+			return err
+		}
+		ctx := context.Background()
+		if err = client.Commit(ctx); err != nil {
+			return err
+		}
+		if err = client.FullSync(ctx, []todoist.Command{}); err != nil {
+			return err
+		}
+		syncedProject := client.Project.Resolve(id)
+		if syncedProject == nil {
+			return errors.New("Failed to add this project. It may be failed to sync.")
+		}
+		fmt.Println("Successful updating project.")
+		fmt.Println(util.ProjectTableString([]todoist.Project{*syncedProject}))
+		return nil
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(projectCmd)
-	projectAddCmd.Flags().IntP("color", "c", 7, "color")
-	projectAddCmd.Flags().IntP("indent", "i", 1, "indent")
-	projectCmd.AddCommand(projectListCmd, projectAddCmd)
+	projectCmd.AddCommand(projectListCmd)
+	projectAddCmd.Flags().StringVarP(&projectColor, "color", "c", "7", "color")
+	projectAddCmd.Flags().StringVarP(&projectIndent, "indent", "i", "1", "indent")
+	projectCmd.AddCommand(projectAddCmd)
+	projectUpdateCmd.Flags().StringVarP(&projectColor, "color", "c", "", "color")
+	projectUpdateCmd.Flags().StringVarP(&projectIndent, "indent", "i", "", "indent")
+	projectCmd.AddCommand(projectUpdateCmd)
 }
