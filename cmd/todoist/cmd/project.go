@@ -140,6 +140,40 @@ var projectUpdateCmd = &cobra.Command{
 	},
 }
 
+var projectDeleteCmd = &cobra.Command{
+	Use:   "delete id ...",
+	Short: "delete projects",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			return errors.New("Require project ID to delete")
+		}
+		var ids []todoist.ID
+		for _, i := range args {
+			id, err := todoist.NewID(i)
+			if err != nil {
+				return err
+			}
+			ids = append(ids, id)
+		}
+		client, err := newClient()
+		if err != nil {
+			return err
+		}
+		if err = client.Project.Delete(ids); err != nil {
+			return err
+		}
+		ctx := context.Background()
+		if err = client.Commit(ctx); err != nil {
+			return err
+		}
+		if err = client.FullSync(ctx, []todoist.Command{}); err != nil {
+			return err
+		}
+		fmt.Println("Successful deleting of project(s).")
+		return nil
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(projectCmd)
 	projectCmd.AddCommand(projectListCmd)
@@ -149,4 +183,5 @@ func init() {
 	projectUpdateCmd.Flags().StringVarP(&projectColor, "color", "c", "", "color")
 	projectUpdateCmd.Flags().StringVarP(&projectIndent, "indent", "i", "", "indent")
 	projectCmd.AddCommand(projectUpdateCmd)
+	projectCmd.AddCommand(projectDeleteCmd)
 }
