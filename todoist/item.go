@@ -198,6 +198,19 @@ func (c *ItemClient) Resolve(id ID) *Item {
 	return c.cache.resolve(id)
 }
 
+func (c ItemClient) FindByProjectIDs(ids []ID) []Item {
+	var res []Item
+	for _, i := range c.GetAll() {
+		for _, pid := range ids {
+			if i.ProjectID == pid {
+				res = append(res, i)
+				break
+			}
+		}
+	}
+	return res
+}
+
 func (c ItemClient) FindByContent(substr string) []Item {
 	var res []Item
 	for _, i := range c.GetAll() {
