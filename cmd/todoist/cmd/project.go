@@ -11,11 +11,6 @@ import (
 	"strings"
 )
 
-var (
-	projectColor  string
-	projectIndent string
-)
-
 // projectCmd represents the project command
 var projectCmd = &cobra.Command{
 	Use:   "project",
@@ -48,17 +43,25 @@ var projectAddCmd = &cobra.Command{
 		project := todoist.Project{
 			Name: name,
 		}
-		if len(projectColor) > 0 {
-			color, err := strconv.Atoi(projectColor)
+		colorStr, err := cmd.Flags().GetString("color")
+		if err != nil {
+			return errors.New("Invalid project color")
+		}
+		if len(colorStr) > 0 {
+			color, err := strconv.Atoi(colorStr)
 			if err != nil {
-				return fmt.Errorf("Invalid project color: %s", projectColor)
+				return fmt.Errorf("Invalid project color: %s", colorStr)
 			}
 			project.Color = color
 		}
-		if len(projectIndent) > 0 {
-			i, err := strconv.Atoi(projectIndent)
+		indentStr, err := cmd.Flags().GetString("indent")
+		if err != nil {
+			return errors.New("Invalid project indent")
+		}
+		if len(indentStr) > 0 {
+			i, err := strconv.Atoi(indentStr)
 			if err != nil {
-				return fmt.Errorf("Invalid project indent: %s", projectIndent)
+				return fmt.Errorf("Invalid project indent: %s", indentStr)
 			}
 			project.Indent = i
 		}
@@ -106,17 +109,25 @@ var projectUpdateCmd = &cobra.Command{
 		if len(args) > 1 {
 			project.Name = strings.Join(args[1:], " ")
 		}
-		if len(projectColor) > 0 {
-			color, err := strconv.Atoi(projectColor)
+		colorStr, err := cmd.Flags().GetString("color")
+		if err != nil {
+			return errors.New("Invalid project color")
+		}
+		if len(colorStr) > 0 {
+			color, err := strconv.Atoi(colorStr)
 			if err != nil {
-				return fmt.Errorf("Invalid project color: %s", projectColor)
+				return fmt.Errorf("Invalid project color: %s", colorStr)
 			}
 			project.Color = color
 		}
-		if len(projectIndent) > 0 {
-			i, err := strconv.Atoi(projectIndent)
+		indentStr, err := cmd.Flags().GetString("indent")
+		if err != nil {
+			return errors.New("Invalid project indent")
+		}
+		if len(indentStr) > 0 {
+			i, err := strconv.Atoi(indentStr)
 			if err != nil {
-				return fmt.Errorf("Invalid project indent: %s", projectIndent)
+				return fmt.Errorf("Invalid project indent: %s", indentStr)
 			}
 			project.Indent = i
 		}
@@ -141,7 +152,7 @@ var projectUpdateCmd = &cobra.Command{
 }
 
 var projectDeleteCmd = &cobra.Command{
-	Use:   "delete id ...",
+	Use:   "delete id [...]",
 	Short: "delete projects",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
@@ -174,14 +185,84 @@ var projectDeleteCmd = &cobra.Command{
 	},
 }
 
+var projectArchiveCmd = &cobra.Command{
+	Use:   "archive id [...]",
+	Short: "archive projects",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			return errors.New("Require project ID to archive")
+		}
+		var ids []todoist.ID
+		for _, i := range args {
+			id, err := todoist.NewID(i)
+			if err != nil {
+				return err
+			}
+			ids = append(ids, id)
+		}
+		client, err := newClient()
+		if err != nil {
+			return err
+		}
+		if err = client.Project.Archive(ids); err != nil {
+			return err
+		}
+		ctx := context.Background()
+		if err = client.Commit(ctx); err != nil {
+			return err
+		}
+		if err = client.FullSync(ctx, []todoist.Command{}); err != nil {
+			return err
+		}
+		fmt.Println("Successful archiving of project(s).")
+		return nil
+	},
+}
+
+var projectUnarchiveCmd = &cobra.Command{
+	Use:   "unarchive id [...]",
+	Short: "unarchive projects",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			return errors.New("Require project ID to un-archive")
+		}
+		var ids []todoist.ID
+		for _, i := range args {
+			id, err := todoist.NewID(i)
+			if err != nil {
+				return err
+			}
+			ids = append(ids, id)
+		}
+		client, err := newClient()
+		if err != nil {
+			return err
+		}
+		if err = client.Project.Unarchive(ids); err != nil {
+			return err
+		}
+		ctx := context.Background()
+		if err = client.Commit(ctx); err != nil {
+			return err
+		}
+		if err = client.FullSync(ctx, []todoist.Command{}); err != nil {
+			return err
+		}
+		fmt.Println("Successful un-archiving of project(s).")
+		return nil
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(projectCmd)
 	projectCmd.AddCommand(projectListCmd)
-	projectAddCmd.Flags().StringVarP(&projectColor, "color", "c", "7", "color")
-	projectAddCmd.Flags().StringVarP(&projectIndent, "indent", "i", "1", "indent")
+	projectAddCmd.Flags().StringP("color", "c", "7", "color")
+	projectAddCmd.Flags().StringP("indent", "i", "1", "indent")
 	projectCmd.AddCommand(projectAddCmd)
-	projectUpdateCmd.Flags().StringVarP(&projectColor, "color", "c", "", "color")
-	projectUpdateCmd.Flags().StringVarP(&projectIndent, "indent", "i", "", "indent")
+	projectUpdateCmd.Flags().StringP("color", "c", "", "color")
+	projectUpdateCmd.Flags().StringP("indent", "i", "", "indent")
 	projectCmd.AddCommand(projectUpdateCmd)
 	projectCmd.AddCommand(projectDeleteCmd)
+	projectCmd.AddCommand(projectArchiveCmd)
+	projectCmd.AddCommand(projectUnarchiveCmd)
 }
