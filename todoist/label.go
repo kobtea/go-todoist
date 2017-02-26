@@ -113,25 +113,29 @@ func (c *labelCache) resolve(id ID) *Label {
 }
 
 func (c *labelCache) store(label Label) {
-	old := c.resolve(label.ID)
-	if old == nil {
-		if !label.IsDeleted {
-			*c.cache = append(*c.cache, label)
-		}
-	} else {
-		if label.IsDeleted {
-			c.remove(label)
+	var res []Label
+	isNew := true
+	for _, l := range *c.cache {
+		if l.Equal(label) {
+			if !label.IsDeleted {
+				res = append(res, label)
+			}
+			isNew = false
 		} else {
-			old = &label
+			res = append(res, l)
 		}
 	}
+	if isNew && !label.IsDeleted.Bool() {
+		res = append(res, label)
+	}
+	c.cache = &res
 }
 
 func (c *labelCache) remove(label Label) {
 	var res []Label
-	for _, p := range *c.cache {
-		if !p.Equal(label) {
-			res = append(res, p)
+	for _, l := range *c.cache {
+		if !l.Equal(label) {
+			res = append(res, l)
 		}
 	}
 	c.cache = &res

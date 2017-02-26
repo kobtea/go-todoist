@@ -4,6 +4,14 @@ import "fmt"
 
 type IntBool bool
 
+func (i IntBool) Bool() bool {
+	if i {
+		return true
+	} else {
+		return false
+	}
+}
+
 func (i IntBool) MarshalJSON() ([]byte, error) {
 	if i {
 		return []byte("1"), nil

@@ -113,25 +113,29 @@ func (c *filterCache) resolve(id ID) *Filter {
 }
 
 func (c *filterCache) store(filter Filter) {
-	old := c.resolve(filter.ID)
-	if old == nil {
-		if !filter.IsDeleted {
-			*c.cache = append(*c.cache, filter)
-		}
-	} else {
-		if filter.IsDeleted {
-			c.remove(filter)
+	var res []Filter
+	isNew := true
+	for _, f := range *c.cache {
+		if f.Equal(filter) {
+			if !filter.IsDeleted {
+				res = append(res, filter)
+			}
+			isNew = false
 		} else {
-			old = &filter
+			res = append(res, f)
 		}
 	}
+	if isNew && !filter.IsDeleted.Bool() {
+		res = append(res, filter)
+	}
+	c.cache = &res
 }
 
 func (c *filterCache) remove(filter Filter) {
 	var res []Filter
-	for _, p := range *c.cache {
-		if !p.Equal(filter) {
-			res = append(res, p)
+	for _, f := range *c.cache {
+		if !f.Equal(filter) {
+			res = append(res, f)
 		}
 	}
 	c.cache = &res

@@ -221,18 +221,22 @@ func (c *projectCache) resolve(id ID) *Project {
 }
 
 func (c *projectCache) store(project Project) {
-	old := c.resolve(project.ID)
-	if old == nil {
-		if !project.IsDeleted {
-			*c.cache = append(*c.cache, project)
-		}
-	} else {
-		if project.IsDeleted {
-			c.remove(project)
+	var res []Project
+	isNew := true
+	for _, p := range *c.cache {
+		if p.Equal(project) {
+			if !project.IsDeleted {
+				res = append(res, project)
+			}
+			isNew = false
 		} else {
-			old = &project
+			res = append(res, p)
 		}
 	}
+	if isNew && !project.IsDeleted.Bool() {
+		res = append(res, project)
+	}
+	c.cache = &res
 }
 
 func (c *projectCache) remove(project Project) {

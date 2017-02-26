@@ -236,20 +236,24 @@ func (c *itemCache) resolve(id ID) *Item {
 }
 
 func (c *itemCache) store(item Item) {
-	old := c.resolve(item.ID)
 	// sync api do not returns deleted items.
 	// so remove deleted items from cache too.
-	if old == nil {
-		if !item.IsDeleted {
-			*c.cache = append(*c.cache, item)
-		}
-	} else {
-		if item.IsDeleted {
-			c.remove(item)
+	var res []Item
+	isNew := true
+	for _, i := range *c.cache {
+		if i.Equal(item) {
+			if !item.IsDeleted {
+				res = append(res, item)
+			}
+			isNew = false
 		} else {
-			old = &item
+			res = append(res, i)
 		}
 	}
+	if isNew && !item.IsDeleted.Bool() {
+		res = append(res, item)
+	}
+	c.cache = &res
 }
 
 func (c *itemCache) remove(item Item) {
