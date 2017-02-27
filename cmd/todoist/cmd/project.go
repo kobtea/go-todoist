@@ -158,13 +158,9 @@ var projectDeleteCmd = &cobra.Command{
 		if len(args) < 1 {
 			return errors.New("Require project ID to delete")
 		}
-		var ids []todoist.ID
-		for _, i := range args {
-			id, err := todoist.NewID(i)
-			if err != nil {
-				return err
-			}
-			ids = append(ids, id)
+		ids, err := todoist.NewIDs(args)
+		if err != nil {
+			return err
 		}
 		client, err := newClient()
 		if err != nil {
@@ -192,13 +188,9 @@ var projectArchiveCmd = &cobra.Command{
 		if len(args) < 1 {
 			return errors.New("Require project ID to archive")
 		}
-		var ids []todoist.ID
-		for _, i := range args {
-			id, err := todoist.NewID(i)
-			if err != nil {
-				return err
-			}
-			ids = append(ids, id)
+		ids, err := todoist.NewIDs(args)
+		if err != nil {
+			return err
 		}
 		client, err := newClient()
 		if err != nil {
@@ -226,13 +218,9 @@ var projectUnarchiveCmd = &cobra.Command{
 		if len(args) < 1 {
 			return errors.New("Require project ID to un-archive")
 		}
-		var ids []todoist.ID
-		for _, i := range args {
-			id, err := todoist.NewID(i)
-			if err != nil {
-				return err
-			}
-			ids = append(ids, id)
+		ids, err := todoist.NewIDs(args)
+		if err != nil {
+			return err
 		}
 		client, err := newClient()
 		if err != nil {

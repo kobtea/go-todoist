@@ -72,13 +72,12 @@ var itemCompleteCmd = &cobra.Command{
 	Use:   "complete",
 	Short: "complete items",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var ids []todoist.ID
-		for _, s := range args {
-			id, err := todoist.NewID(s)
-			if err != nil {
-				return fmt.Errorf("Invalid ID: %s", s)
-			}
-			ids = append(ids, id)
+		if len(args) < 1 {
+			return errors.New("Require item ID to complete")
+		}
+		ids, err := todoist.NewIDs(args)
+		if err != nil {
+			return err
 		}
 		client, err := newClient()
 		if err != nil {

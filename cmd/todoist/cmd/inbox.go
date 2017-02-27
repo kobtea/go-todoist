@@ -3,10 +3,10 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
 	"errors"
-	"github.com/kobtea/go-todoist/todoist"
 	"github.com/kobtea/go-todoist/cmd/util"
+	"github.com/kobtea/go-todoist/todoist"
+	"github.com/spf13/cobra"
 )
 
 // inboxCmd represents the inbox command

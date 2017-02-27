@@ -15,6 +15,18 @@ func NewID(id string) (ID, error) {
 	return "", fmt.Errorf("Invalid ID: %s", id)
 }
 
+func NewIDs(ids []string) ([]ID, error) {
+	var res []ID
+	for _, i := range ids {
+		id, err := NewID(i)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, id)
+	}
+	return res, nil
+}
+
 func IsValidID(id ID) bool {
 	if _, err := strconv.Atoi(string(id)); err == nil {
 		return true
