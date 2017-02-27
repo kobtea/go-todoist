@@ -21,7 +21,7 @@ var itemListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "list items",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		client, err := newClient()
+		client, err := util.NewClient()
 		if err != nil {
 			return err
 		}
@@ -36,7 +36,7 @@ var itemAddCmd = &cobra.Command{
 	Use:   "add",
 	Short: "add items",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		client, err := newClient()
+		client, err := util.NewClient()
 		if err != nil {
 			return err
 		}
@@ -72,25 +72,13 @@ var itemCompleteCmd = &cobra.Command{
 	Use:   "complete",
 	Short: "complete items",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 1 {
-			return errors.New("Require item ID to complete")
-		}
-		ids, err := todoist.NewIDs(args)
-		if err != nil {
-			return err
-		}
-		client, err := newClient()
-		if err != nil {
-			return err
-		}
-		if err = client.Item.Complete(ids, true); err != nil {
-			return err
-		}
-		ctx := context.Background()
-		if err = client.Commit(ctx); err != nil {
-			return err
-		}
-		if err = client.FullSync(ctx, []todoist.Command{}); err != nil {
+		if err := util.AutoCommit(func(client todoist.Client, ctx context.Context) error {
+			return util.ProcessIDs(
+				args,
+				func(ids []todoist.ID) error {
+					return client.Item.Complete(ids, true)
+				})
+		}); err != nil {
 			return err
 		}
 		fmt.Println("Successful completion of item(s).")

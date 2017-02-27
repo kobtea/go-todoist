@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kobtea/go-todoist/todoist"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -48,13 +47,4 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
-}
-
-func newClient() (*todoist.Client, error) {
-	return todoist.NewClient(
-		"",
-		viper.GetString("TODOIST_TOKEN"),
-		"*",
-		"",
-		nil)
 }

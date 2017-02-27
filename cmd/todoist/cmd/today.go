@@ -13,7 +13,7 @@ var todayCmd = &cobra.Command{
 	Use:   "today",
 	Short: "show today's tasks",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		client, err := newClient()
+		client, err := util.NewClient()
 		if err != nil {
 			return err
 		}

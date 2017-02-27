@@ -21,7 +21,7 @@ var projectListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "list projects",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		client, err := newClient()
+		client, err := util.NewClient()
 		if err != nil {
 			return err
 		}
@@ -35,7 +35,7 @@ var projectAddCmd = &cobra.Command{
 	Use:   "add",
 	Short: "add projects",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		client, err := newClient()
+		client, err := util.NewClient()
 		if err != nil {
 			return err
 		}
@@ -98,7 +98,7 @@ var projectUpdateCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("Invalid ID: %s", args[0])
 		}
-		client, err := newClient()
+		client, err := util.NewClient()
 		if err != nil {
 			return err
 		}
@@ -155,25 +155,9 @@ var projectDeleteCmd = &cobra.Command{
 	Use:   "delete id [...]",
 	Short: "delete projects",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 1 {
-			return errors.New("Require project ID to delete")
-		}
-		ids, err := todoist.NewIDs(args)
-		if err != nil {
-			return err
-		}
-		client, err := newClient()
-		if err != nil {
-			return err
-		}
-		if err = client.Project.Delete(ids); err != nil {
-			return err
-		}
-		ctx := context.Background()
-		if err = client.Commit(ctx); err != nil {
-			return err
-		}
-		if err = client.FullSync(ctx, []todoist.Command{}); err != nil {
+		if err := util.AutoCommit(func(client todoist.Client, ctx context.Context) error {
+			return util.ProcessIDs(args, client.Project.Delete)
+		}); err != nil {
 			return err
 		}
 		fmt.Println("Successful deleting of project(s).")
@@ -185,25 +169,9 @@ var projectArchiveCmd = &cobra.Command{
 	Use:   "archive id [...]",
 	Short: "archive projects",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 1 {
-			return errors.New("Require project ID to archive")
-		}
-		ids, err := todoist.NewIDs(args)
-		if err != nil {
-			return err
-		}
-		client, err := newClient()
-		if err != nil {
-			return err
-		}
-		if err = client.Project.Archive(ids); err != nil {
-			return err
-		}
-		ctx := context.Background()
-		if err = client.Commit(ctx); err != nil {
-			return err
-		}
-		if err = client.FullSync(ctx, []todoist.Command{}); err != nil {
+		if err := util.AutoCommit(func(client todoist.Client, ctx context.Context) error {
+			return util.ProcessIDs(args, client.Project.Archive)
+		}); err != nil {
 			return err
 		}
 		fmt.Println("Successful archiving of project(s).")
@@ -215,25 +183,9 @@ var projectUnarchiveCmd = &cobra.Command{
 	Use:   "unarchive id [...]",
 	Short: "unarchive projects",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 1 {
-			return errors.New("Require project ID to un-archive")
-		}
-		ids, err := todoist.NewIDs(args)
-		if err != nil {
-			return err
-		}
-		client, err := newClient()
-		if err != nil {
-			return err
-		}
-		if err = client.Project.Unarchive(ids); err != nil {
-			return err
-		}
-		ctx := context.Background()
-		if err = client.Commit(ctx); err != nil {
-			return err
-		}
-		if err = client.FullSync(ctx, []todoist.Command{}); err != nil {
+		if err := util.AutoCommit(func(client todoist.Client, ctx context.Context) error {
+			return util.ProcessIDs(args, client.Project.Unarchive)
+		}); err != nil {
 			return err
 		}
 		fmt.Println("Successful un-archiving of project(s).")

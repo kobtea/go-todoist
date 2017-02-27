@@ -14,7 +14,7 @@ var inboxCmd = &cobra.Command{
 	Use:   "inbox",
 	Short: "show inbox tasks",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		client, err := newClient()
+		client, err := util.NewClient()
 		if err != nil {
 			return err
 		}

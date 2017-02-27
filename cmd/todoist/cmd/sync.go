@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/kobtea/go-todoist/cmd/util"
 	"github.com/kobtea/go-todoist/todoist"
 	"github.com/spf13/cobra"
 )
@@ -12,7 +13,7 @@ var syncCmd = &cobra.Command{
 	Use:   "sync",
 	Short: "Syncronize origin server",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		client, err := newClient()
+		client, err := util.NewClient()
 		if err != nil {
 			return err
 		}
