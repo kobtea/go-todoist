@@ -55,6 +55,21 @@ func TableString(rows [][]todoist.ColorStringer) string {
 	return res
 }
 
+func FilterTableString(filters []todoist.Filter) string {
+	sort.Slice(filters, func(i, j int) bool {
+		return filters[i].ItemOrder < filters[j].ItemOrder
+	})
+	var rows [][]todoist.ColorStringer
+	for _, f := range filters {
+		rows = append(rows, []todoist.ColorStringer{
+			todoist.NewNoColorString(f.ID.String()),
+			f,
+			todoist.NewNoColorString(f.Query),
+		})
+	}
+	return TableString(rows)
+}
+
 func ItemTableString(items []todoist.Item, relations todoist.ItemRelations) string {
 	var rows [][]todoist.ColorStringer
 	for _, i := range items {

@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/fatih/color"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 type Filter struct {
@@ -14,6 +16,32 @@ type Filter struct {
 	Query     string `json:"query"`
 	Color     int    `json:"color"`
 	ItemOrder int    `json:"item_order"`
+}
+
+func (f Filter) String() string {
+	return f.Name
+}
+
+func (f Filter) ColorString() string {
+	var attr color.Attribute
+	switch f.Color {
+	case 2, 4, 10:
+		attr = color.FgHiRed
+	case 0, 11:
+		attr = color.FgHiGreen
+	case 1:
+		attr = color.FgHiYellow
+	case 5, 8:
+		attr = color.FgHiBlue
+	case 3:
+		attr = color.FgHiMagenta
+	case 6, 9:
+		attr = color.FgHiCyan
+	case 7, 12:
+	default:
+		attr = color.FgHiBlack
+	}
+	return color.New(attr).Sprint(f.String())
 }
 
 type FilterClient struct {
@@ -93,6 +121,16 @@ func (c *FilterClient) GetAll() []Filter {
 
 func (c *FilterClient) Resolve(id ID) *Filter {
 	return c.cache.resolve(id)
+}
+
+func (c FilterClient) FindByName(substr string) []Filter {
+	var res []Filter
+	for _, f := range c.GetAll() {
+		if strings.Contains(f.Name, substr) {
+			res = append(res, f)
+		}
+	}
+	return res
 }
 
 type filterCache struct {
