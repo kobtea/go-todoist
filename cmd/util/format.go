@@ -93,3 +93,17 @@ func ProjectTableString(projects []todoist.Project) string {
 	}
 	return TableString(rows)
 }
+
+func LabelTableString(labels []todoist.Label) string {
+	sort.Slice(labels, func(i, j int) bool {
+		return labels[i].ItemOrder < labels[j].ItemOrder
+	})
+	var rows [][]todoist.ColorStringer
+	for _, l := range labels {
+		rows = append(rows, []todoist.ColorStringer{
+			todoist.NewNoColorString(l.ID.String()),
+			l,
+		})
+	}
+	return TableString(rows)
+}

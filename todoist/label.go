@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/fatih/color"
 	"net/http"
 	"net/url"
 )
@@ -17,6 +18,28 @@ type Label struct {
 
 func (l Label) String() string {
 	return "@" + l.Name
+}
+
+func (l Label) ColorString() string {
+	var attr color.Attribute
+	switch l.Color {
+	case 2, 4, 10:
+		attr = color.FgHiRed
+	case 0, 11:
+		attr = color.FgHiGreen
+	case 1:
+		attr = color.FgHiYellow
+	case 5, 6:
+		attr = color.FgHiBlue
+	case 3:
+		attr = color.FgHiMagenta
+	case 8, 9:
+		attr = color.FgHiCyan
+	case 7, 12:
+	default:
+		attr = color.FgHiBlack
+	}
+	return color.New(attr).Sprint(l.String())
 }
 
 type LabelClient struct {
