@@ -7,6 +7,7 @@ import (
 	"github.com/fatih/color"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 type Label struct {
@@ -116,6 +117,16 @@ func (c *LabelClient) GetAll() []Label {
 
 func (c *LabelClient) Resolve(id ID) *Label {
 	return c.cache.resolve(id)
+}
+
+func (c LabelClient) FindByName(substr string) []Label {
+	var res []Label
+	for _, l := range c.GetAll() {
+		if strings.Contains(l.Name, substr) {
+			res = append(res, l)
+		}
+	}
+	return res
 }
 
 type labelCache struct {
