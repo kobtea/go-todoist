@@ -141,6 +141,29 @@ var filterUpdateCmd = &cobra.Command{
 	},
 }
 
+var filterDeleteCmd = &cobra.Command{
+	Use:   "delete id [...]",
+	Short: "delete filters",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := util.AutoCommit(func(client todoist.Client, ctx context.Context) error {
+			return util.ProcessIDs(
+				args,
+				func(ids []todoist.ID) error {
+					for _, id := range ids {
+						if err := client.Filter.Delete(id); err != nil {
+							return err
+						}
+					}
+					return nil
+				})
+		}); err != nil {
+			return err
+		}
+		fmt.Println("Successful deleting of filter(s).")
+		return nil
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(filterCmd)
 	filterCmd.AddCommand(filterListCmd)
@@ -150,4 +173,5 @@ func init() {
 	filterUpdateCmd.Flags().StringP("query", "q", "", "query")
 	filterUpdateCmd.Flags().StringP("color", "c", "", "color")
 	filterCmd.AddCommand(filterUpdateCmd)
+	filterCmd.AddCommand(filterDeleteCmd)
 }
