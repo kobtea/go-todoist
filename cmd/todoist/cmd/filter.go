@@ -81,10 +81,73 @@ var filterAddCmd = &cobra.Command{
 	},
 }
 
+var filterUpdateCmd = &cobra.Command{
+	Use:   "update id [new_name]",
+	Short: "update filter",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			return errors.New("Require filter ID to update")
+		}
+		id, err := todoist.NewID(args[0])
+		if err != nil {
+			return fmt.Errorf("Invalid ID: %s", args[0])
+		}
+		client, err := util.NewClient()
+		if err != nil {
+			return err
+		}
+		filter := client.Filter.Resolve(id)
+		if filter == nil {
+			return fmt.Errorf("No such filter id: %s", id)
+		}
+		if len(args) > 1 {
+			filter.Name = strings.Join(args[1:], " ")
+		}
+		query, err := cmd.Flags().GetString("query")
+		if err != nil {
+			return err
+		}
+		if len(query) > 0 {
+			filter.Query = query
+		}
+		colorStr, err := cmd.Flags().GetString("color")
+		if err != nil {
+			return errors.New("Invalid filter color")
+		}
+		if len(colorStr) > 0 {
+			color, err := strconv.Atoi(colorStr)
+			if err != nil {
+				return fmt.Errorf("Invalid filter color: %s", colorStr)
+			}
+			filter.Color = color
+		}
+		if _, err = client.Filter.Update(*filter); err != nil {
+			return err
+		}
+		ctx := context.Background()
+		if err = client.Commit(ctx); err != nil {
+			return err
+		}
+		if err = client.FullSync(ctx, []todoist.Command{}); err != nil {
+			return err
+		}
+		syncedFilter := client.Filter.Resolve(id)
+		if syncedFilter == nil {
+			return errors.New("Failed to add this filter. It may be failed to sync.")
+		}
+		fmt.Println("Successful updating filter.")
+		fmt.Println(util.FilterTableString([]todoist.Filter{*syncedFilter}))
+		return nil
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(filterCmd)
 	filterCmd.AddCommand(filterListCmd)
 	filterAddCmd.Flags().StringP("query", "q", "", "query")
 	filterAddCmd.Flags().StringP("color", "c", "12", "color")
 	filterCmd.AddCommand(filterAddCmd)
+	filterUpdateCmd.Flags().StringP("query", "q", "", "query")
+	filterUpdateCmd.Flags().StringP("color", "c", "", "color")
+	filterCmd.AddCommand(filterUpdateCmd)
 }
