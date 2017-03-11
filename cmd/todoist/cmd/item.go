@@ -68,6 +68,24 @@ var itemAddCmd = &cobra.Command{
 	},
 }
 
+var itemDeleteCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "delete items",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := util.AutoCommit(func(client todoist.Client, ctx context.Context) error {
+			return util.ProcessIDs(
+				args,
+				func(ids []todoist.ID) error {
+					return client.Item.Delete(ids)
+				})
+		}); err != nil {
+			return err
+		}
+		fmt.Println("Successful deleting of item(s).")
+		return nil
+	},
+}
+
 var itemCompleteCmd = &cobra.Command{
 	Use:   "complete",
 	Short: "complete items",
@@ -109,6 +127,7 @@ func init() {
 	RootCmd.AddCommand(itemCmd)
 	itemCmd.AddCommand(itemListCmd)
 	itemCmd.AddCommand(itemAddCmd)
+	itemCmd.AddCommand(itemDeleteCmd)
 	itemCmd.AddCommand(itemCompleteCmd)
 	itemCmd.AddCommand(itemUncompleteCmd)
 }
