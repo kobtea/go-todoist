@@ -86,6 +86,57 @@ var itemDeleteCmd = &cobra.Command{
 	},
 }
 
+var itemMoveCmd = &cobra.Command{
+	Use:   "move",
+	Short: "move the project of the item",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		client, err := util.NewClient()
+		if err != nil {
+			return err
+		}
+		if len(args) < 1 {
+			return errors.New("Require item ID to move")
+		}
+		id, err := todoist.NewID(args[0])
+		if err != nil {
+			return fmt.Errorf("Invalid ID: %s", args[0])
+		}
+		item := client.Item.Resolve(id)
+		if item == nil {
+			return fmt.Errorf("No such item id: %s", id)
+		}
+		pidstr, err := cmd.Flags().GetString("project")
+		if err != nil {
+			return errors.New("Invalid project id")
+		}
+		if len(pidstr) == 0 {
+			return errors.New("Require project ID to move")
+		}
+		pid, err := todoist.NewID(pidstr)
+		if err != nil {
+			return fmt.Errorf("Invalid ID: %s", args[0])
+		}
+		if err = client.Item.Move(map[todoist.ID][]todoist.ID{item.ProjectID: {item.ID}}, pid); err != nil {
+			return err
+		}
+		ctx := context.Background()
+		if err = client.Commit(ctx); err != nil {
+			return err
+		}
+		if err = client.FullSync(ctx, []todoist.Command{}); err != nil {
+			return err
+		}
+		syncedItem := client.Item.Resolve(id)
+		if syncedItem == nil {
+			return errors.New("Failed to move this item. It may be failed to sync.")
+		}
+		relations := client.Relation.Items([]todoist.Item{*syncedItem})
+		fmt.Println("Successful move item.")
+		fmt.Println(util.ItemTableString([]todoist.Item{*syncedItem}, relations))
+		return nil
+	},
+}
+
 var itemCompleteCmd = &cobra.Command{
 	Use:   "complete",
 	Short: "complete items",
@@ -128,6 +179,8 @@ func init() {
 	itemCmd.AddCommand(itemListCmd)
 	itemCmd.AddCommand(itemAddCmd)
 	itemCmd.AddCommand(itemDeleteCmd)
+	itemMoveCmd.Flags().StringP("project", "p", "", "project")
+	itemCmd.AddCommand(itemMoveCmd)
 	itemCmd.AddCommand(itemCompleteCmd)
 	itemCmd.AddCommand(itemUncompleteCmd)
 }
