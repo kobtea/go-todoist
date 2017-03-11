@@ -86,9 +86,29 @@ var itemCompleteCmd = &cobra.Command{
 	},
 }
 
+var itemUncompleteCmd = &cobra.Command{
+	Use:   "uncomplete",
+	Short: "uncomplete items",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := util.AutoCommit(func(client todoist.Client, ctx context.Context) error {
+			return util.ProcessIDs(
+				args,
+				func(ids []todoist.ID) error {
+					restoreState := map[todoist.ID][]string{}
+					return client.Item.Uncomplete(ids, true, restoreState)
+				})
+		}); err != nil {
+			return err
+		}
+		fmt.Println("Successful uncompletion of item(s).")
+		return nil
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(itemCmd)
 	itemCmd.AddCommand(itemListCmd)
 	itemCmd.AddCommand(itemAddCmd)
 	itemCmd.AddCommand(itemCompleteCmd)
+	itemCmd.AddCommand(itemUncompleteCmd)
 }
