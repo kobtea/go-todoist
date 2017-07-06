@@ -76,13 +76,13 @@ type Stats struct {
 }
 
 type CompletedItems struct {
-	Items    []CompletedItem `json:"items"`
-	Projects map[ID]Project  `json:"projects"`
+	Items    []Item         `json:"items"`
+	Projects map[ID]Project `json:"projects"`
 }
 
-func (c *CompletedItems) GroupByCompletedDate() map[string][]CompletedItem {
+func (c *CompletedItems) GroupByCompletedDate() map[string][]Item {
 	const layout = "2006-01-02"
-	res := map[string][]CompletedItem{}
+	res := map[string][]Item{}
 	for _, item := range c.Items {
 		date := item.CompletedDate.Local().Format(layout)
 		res[date] = append(res[date], item)

@@ -31,11 +31,7 @@ type Item struct {
 	IsArchived     int    `json:"is_archived,omitempty"`
 	SyncID         int    `json:"sync_id,omitempty"`
 	DateAdded      Time   `json:"date_added,omitempty"`
-}
-
-type CompletedItem struct {
-	Item
-	CompletedDate Time `json:"completed_date"`
+	CompletedDate  Time   `json:"completed_date"`
 }
 
 func (i Item) IsOverDueDate() bool {
