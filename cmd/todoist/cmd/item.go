@@ -27,7 +27,7 @@ var itemListCmd = &cobra.Command{
 		}
 		items := client.Item.GetAll()
 		relations := client.Relation.Items(items)
-		fmt.Println(util.ItemTableString(items, relations))
+		fmt.Println(util.ItemTableString(items, relations, func(i todoist.Item) todoist.Time { return i.DueDateUtc }))
 		return nil
 	},
 }
@@ -63,7 +63,7 @@ var itemAddCmd = &cobra.Command{
 		syncedItem := items[len(items)-1]
 		relations := client.Relation.Items([]todoist.Item{syncedItem})
 		fmt.Println("Successful addition of an item.")
-		fmt.Println(util.ItemTableString([]todoist.Item{syncedItem}, relations))
+		fmt.Println(util.ItemTableString([]todoist.Item{syncedItem}, relations, func(i todoist.Item) todoist.Time { return i.DueDateUtc }))
 		return nil
 	},
 }
@@ -132,7 +132,7 @@ var itemMoveCmd = &cobra.Command{
 		}
 		relations := client.Relation.Items([]todoist.Item{*syncedItem})
 		fmt.Println("Successful move item.")
-		fmt.Println(util.ItemTableString([]todoist.Item{*syncedItem}, relations))
+		fmt.Println(util.ItemTableString([]todoist.Item{*syncedItem}, relations, func(i todoist.Item) todoist.Time { return i.DueDateUtc }))
 		return nil
 	},
 }

@@ -70,7 +70,7 @@ func FilterTableString(filters []todoist.Filter) string {
 	return TableString(rows)
 }
 
-func ItemTableString(items []todoist.Item, relations todoist.ItemRelations) string {
+func ItemTableString(items []todoist.Item, relations todoist.ItemRelations, f func(item todoist.Item) todoist.Time) string {
 	var rows [][]todoist.ColorStringer
 	for _, i := range items {
 		project := todoist.Project{}
@@ -85,7 +85,7 @@ func ItemTableString(items []todoist.Item, relations todoist.ItemRelations) stri
 		}
 		rows = append(rows, []todoist.ColorStringer{
 			todoist.NewNoColorString(i.ID.String()),
-			i.DueDateUtc,
+			f(i),
 			todoist.NewNoColorString(strconv.Itoa(i.Priority)),
 			project,
 			todoist.NewNoColorString(strings.Join(labels, " ")),
