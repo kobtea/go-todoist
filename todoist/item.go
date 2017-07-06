@@ -33,6 +33,11 @@ type Item struct {
 	DateAdded      Time   `json:"date_added,omitempty"`
 }
 
+type CompletedItem struct {
+	Item
+	CompletedDate Time `json:"completed_date"`
+}
+
 func (i Item) IsOverDueDate() bool {
 	return i.DueDateUtc.Before(Time{time.Now().UTC()})
 }

@@ -21,6 +21,7 @@ type Client struct {
 	CacheDir   string
 	syncState  *SyncState
 	Logger     *log.Logger
+	Completed  *CompletedClient
 	Filter     *FilterClient
 	Item       *ItemClient
 	Label      *LabelClient
@@ -74,6 +75,7 @@ func NewClient(endpoint, token, sync_token, cache_dir string, logger *log.Logger
 	if err = c.readCache(); err != nil {
 		c.resetState()
 	}
+	c.Completed = &CompletedClient{c}
 	c.Filter = &FilterClient{c, &filterCache{&c.syncState.Filters}}
 	c.Item = &ItemClient{c, &itemCache{&c.syncState.Items}}
 	c.Label = &LabelClient{c, &labelCache{&c.syncState.Labels}}
