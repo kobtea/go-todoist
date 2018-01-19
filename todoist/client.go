@@ -206,6 +206,9 @@ func (c *Client) updateState(state *SyncState) {
 	for _, note := range state.Notes {
 		c.Note.cache.store(note)
 	}
+	for _, note := range state.ProjectNotes {
+		c.Note.cache.store(note)
+	}
 	c.syncState = state
 }
 

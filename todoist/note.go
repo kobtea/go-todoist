@@ -2,10 +2,10 @@ package todoist
 
 type Note struct {
 	Entity
-	PostedUID ID     `json:"posted_uid"`
-	ItemID    ID     `json:"item_id"`
-	ProjectID ID     `json:"project_id"`
-	Content   string `json:"content"`
+	PostedUID      ID     `json:"posted_uid"`
+	ItemID         ID     `json:"item_id"`
+	ProjectID      ID     `json:"project_id"`
+	Content        string `json:"content"`
 	FileAttachment struct {
 		FileName    string `json:"file_name"`
 		FileSize    int    `json:"file_size"`
@@ -23,11 +23,22 @@ type NoteClient struct {
 	cache *noteCache
 }
 
-// GetAllForItem returns all the cached notes that belog to the given item.
+// GetAllForItem returns all the cached notes that belong to the given item.
 func (c NoteClient) GetAllForItem(itemID ID) []Note {
 	var res []Note
 	for _, n := range c.cache.getAll() {
 		if n.ItemID == itemID {
+			res = append(res, n)
+		}
+	}
+	return res
+}
+
+// GetAllForProject returns all the cached notes that belong to the given project.
+func (c NoteClient) GetAllForProject(projectID ID) []Note {
+	var res []Note
+	for _, n := range c.cache.getAll() {
+		if n.ProjectID == projectID && n.ItemID == "" {
 			res = append(res, n)
 		}
 	}
