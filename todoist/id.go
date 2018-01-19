@@ -69,7 +69,8 @@ func (i *ID) UnmarshalJSON(b []byte) (err error) {
 }
 
 func GenerateTempID() ID {
-	return ID(uuid.NewV4().String())
+	u, _ := uuid.NewV4()
+	return ID(u.String())
 }
 
 func IsTempID(id ID) bool {
@@ -82,7 +83,8 @@ func IsTempID(id ID) bool {
 type UUID string
 
 func GenerateUUID() UUID {
-	return UUID(uuid.NewV4().String())
+	u, _ := uuid.NewV4()
+	return UUID(u.String())
 }
 
 func (i UUID) MarshalJSON() ([]byte, error) {
