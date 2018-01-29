@@ -27,6 +27,7 @@ type Client struct {
 	Label      *LabelClient
 	Project    *ProjectClient
 	Relation   *RelationClient
+	Note       *NoteClient
 	queue      []Command
 }
 
@@ -81,6 +82,7 @@ func NewClient(endpoint, token, sync_token, cache_dir string, logger *log.Logger
 	c.Label = &LabelClient{c, &labelCache{&c.syncState.Labels}}
 	c.Project = &ProjectClient{c, &projectCache{&c.syncState.Projects}}
 	c.Relation = &RelationClient{c}
+	c.Note = &NoteClient{&noteCache{&c.syncState.Notes}}
 	return c, nil
 }
 
@@ -200,6 +202,12 @@ func (c *Client) updateState(state *SyncState) {
 	}
 	for _, project := range state.Projects {
 		c.Project.cache.store(project)
+	}
+	for _, note := range state.Notes {
+		c.Note.cache.store(note)
+	}
+	for _, note := range state.ProjectNotes {
+		c.Note.cache.store(note)
 	}
 	c.syncState = state
 }

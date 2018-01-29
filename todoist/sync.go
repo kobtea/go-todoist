@@ -4,12 +4,12 @@ type SyncState struct {
 	SyncToken string `json:"sync_token"`
 	FullSync  bool   `json:"full_sync"`
 	// User User `json:"user"`
-	Projects []Project `json:"projects"`
-	// ProjectNotes []interface{} `json:"project_notes"`
-	Items   []Item   `json:"items"`
-	Notes   []Note   `json:"notes"`
-	Labels  []Label  `json:"labels"`
-	Filters []Filter `json:"filters"`
+	Projects     []Project `json:"projects"`
+	ProjectNotes []Note    `json:"project_notes"`
+	Items        []Item    `json:"items"`
+	Notes        []Note    `json:"notes"`
+	Labels       []Label   `json:"labels"`
+	Filters      []Filter  `json:"filters"`
 	// DayOrders struct {} `json:"day_orders"`
 	// DayOrdersTimestamp string `json:"day_orders_timestamp"`
 	Reminders []Reminder `json:"reminders"`
