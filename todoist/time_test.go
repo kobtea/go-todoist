@@ -8,7 +8,19 @@ import (
 	"time"
 )
 
-var testTimes = []struct {
+var marshalTimes = []struct {
+	s string
+	v Time
+	e error
+}{
+	{
+		s: "2014-09-26T08:25",
+		v: Time{time.Date(2014, 9, 26, 8, 25, 5, 0, time.UTC)},
+		e: nil,
+	},
+}
+
+var unmarshalTimes = []struct {
 	s string
 	v Time
 	e error
@@ -21,7 +33,7 @@ var testTimes = []struct {
 }
 
 func TestParse(t *testing.T) {
-	for i, tt := range testTimes {
+	for i, tt := range unmarshalTimes {
 		tim, err := Parse(tt.s)
 		if !reflect.DeepEqual(err, tt.e) {
 			t.Errorf("%d. %q error mismatch:\n exp=%s\n got=%s\n\n", i, tt.s, tt.e, err)
@@ -32,20 +44,20 @@ func TestParse(t *testing.T) {
 }
 
 func TestTime_MarshalJSON(t *testing.T) {
-	test := testTimes[0]
-	b, err := test.v.MarshalJSON()
-	if err != nil || string(b) != strconv.Quote(test.s) {
-		t.Errorf("Expect %s, but got %s", strconv.Quote(test.s), string(b))
-	}
-
-	b, err = Time{}.MarshalJSON()
-	if err != nil || string(b) != "null" {
-		t.Errorf("Expect %s, but got %s", strconv.Quote(test.s), string(b))
+	for _, tt := range marshalTimes {
+		b, err := tt.v.MarshalJSON()
+		if err != nil || string(b) != strconv.Quote(tt.s) {
+			t.Errorf("Expect %s, but got %s", strconv.Quote(tt.s), string(b))
+		}
+		b, err = Time{}.MarshalJSON()
+		if err != nil || string(b) != "null" {
+			t.Errorf("Expect %s, but got %s", strconv.Quote(tt.s), string(b))
+		}
 	}
 }
 
 func TestTime_UnmarshalJSON(t *testing.T) {
-	for _, test := range testTimes {
+	for _, test := range unmarshalTimes {
 		var v Time
 		err := v.UnmarshalJSON([]byte(strconv.Quote(test.s)))
 		if !reflect.DeepEqual(err, test.e) {
@@ -65,22 +77,23 @@ func TestTime_UnmarshalJSON(t *testing.T) {
 }
 
 func TestTimeJson(t *testing.T) {
-	j := []byte(`"Fri 26 Sep 2014 08:25:05 +0000"`)
-	v := Time{time.Date(2014, 9, 26, 8, 25, 5, 0, time.UTC)}
+	for _, tt := range marshalTimes {
+		m, err := json.Marshal(tt.v)
+		if err != nil {
+			t.Errorf("unexpected error: %s", err.Error())
+		}
+		if !reflect.DeepEqual(string(m), strconv.Quote(tt.s)) {
+			t.Errorf("mismatch:\n exp=%#v\n got=%#v\n\n", strconv.Quote(tt.s), string(m))
+		}
+	}
 
-	m, err := json.Marshal(v)
-	if err != nil {
-		t.Errorf("unexpected error: %s", err.Error())
-	}
-	if !reflect.DeepEqual(m, j) {
-		t.Errorf("mismatch:\n exp=%#v\n got=%#v\n\n", j, m)
-	}
-
-	var um Time
-	if err = json.Unmarshal(j, &um); err != nil {
-		t.Errorf("unexpected error: %s", err.Error())
-	}
-	if !um.Equal(v) {
-		t.Errorf("mismatch:\n exp=%#v\n got=%#v\n\n", v, um)
+	for _, tt := range unmarshalTimes {
+		var um Time
+		if err := json.Unmarshal([]byte(strconv.Quote(tt.s)), &um); err != nil {
+			t.Errorf("unexpected error: %s", err.Error())
+		}
+		if !um.Equal(tt.v) {
+			t.Errorf("mismatch:\n exp=%#v\n got=%#v\n\n", tt.v, um)
+		}
 	}
 }
