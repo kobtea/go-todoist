@@ -1,0 +1,27 @@
+builds:
+- main: ./cmd/todoist
+  flags: -a -tags netgo
+  ldflags: |
+    -s -w
+    -X github.com/kobtea/go-todoist/cmd/todoist/cmd.Version={{.Version}}
+  env:
+    - CGO_ENABLED=0
+  goos:
+    - linux
+    - darwin
+  goarch:
+    - amd64
+archive:
+  replacements:
+    darwin: Darwin
+    linux: Linux
+    windows: Windows
+    386: i386
+    amd64: x86_64
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+    - '^cut:'

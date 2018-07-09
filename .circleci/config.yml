@@ -1,13 +1,69 @@
-# Golang CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-go/ for more details
+defaults: &defaults
+  docker:
+  - image: circleci/golang:1.10.2
+  working_directory: /go/src/github.com/kobtea/go-todoist
+
 version: 2
 jobs:
-  build:
-    docker:
-      - image: circleci/golang:1.9
-    working_directory: /go/src/github.com/kobtea/go-todoist
+  setup:
+    <<: *defaults
     steps:
-      - checkout
-      - run: go get -v -t -d ./...
-      - run: go test -v ./...
+    - checkout
+    - run: |
+        make setup
+    - persist_to_workspace:
+        root: .
+        paths: .
+  build:
+    <<: *defaults
+    steps:
+    - attach_workspace:
+        at: /go/src/github.com/kobtea/go-todoist
+    - run: |
+        make test
+        make build
+  tagging:
+    <<: *defaults
+    steps:
+    - checkout
+    - run: |
+        make sync-tag
+  release:
+    <<: *defaults
+    steps:
+    - attach_workspace:
+        at: /go/src/github.com/kobtea/go-todoist
+    - run: |
+        make release
+workflows:
+  version: 2
+  build_and_release:
+    jobs:
+    - setup:
+        filters:
+          tags:
+            only: /.*/
+          branches:
+            only: /.*/
+    - build:
+        requires:
+        - setup
+        filters:
+          tags:
+            only: /.*/
+          branches:
+            only: /.*/
+    - release:
+        requires:
+        - build
+        filters:
+          tags:
+            only: /^v.*/
+          branches:
+            ignore: /.*/
+  tagging:
+    jobs:
+    - tagging:
+        filters:
+          branches:
+            only: master
