@@ -22,3 +22,7 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+vendor
+dist
+cmd/todoist/todoist
