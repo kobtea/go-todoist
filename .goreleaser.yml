@@ -1,5 +1,6 @@
 builds:
 - main: ./cmd/todoist
+  binary: todoist
   flags: -a -tags netgo
   ldflags: |
     -s -w
