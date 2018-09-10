@@ -41,6 +41,14 @@ func TestParse(t *testing.T) {
 			t.Errorf("%d. %q mismatch:\n exp=%#v\n got=%#v\n\n", i, tt.s, tt.v, tim)
 		}
 	}
+	for i, tt := range marshalTimes {
+		tim, err := Parse(tt.s)
+		if !reflect.DeepEqual(err, tt.e) {
+			t.Errorf("%d. %q error mismatch:\n exp=%s\n got=%s\n\n", i, tt.s, tt.e, err)
+		} else if tt.e == nil && !tim.Equal(Time{tt.v.Truncate(time.Minute)}) {
+			t.Errorf("%d. %q mismatch:\n exp=%#v\n got=%#v\n\n", i, tt.s, tt.v, tim)
+		}
+	}
 }
 
 func TestTime_MarshalJSON(t *testing.T) {

@@ -31,6 +31,9 @@ func Next7Days() Time {
 func Parse(value string) (Time, error) {
 	t, err := time.Parse(unmarshalLayout, value)
 	if err != nil {
+		t, err = time.Parse(marshalLayout, value)
+	}
+	if err != nil {
 		return Time{}, err
 	}
 	return Time{t}, nil
