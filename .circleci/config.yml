@@ -25,6 +25,9 @@ jobs:
   tagging:
     <<: *defaults
     steps:
+    - add_ssh_keys:
+        fingerprints:
+        - 7d:6f:e7:a0:74:60:9a:be:c1:e0:5d:7b:3c:77:8f:9f
     - checkout
     - run: |
         make sync-tag
