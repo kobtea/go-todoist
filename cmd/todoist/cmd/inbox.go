@@ -20,7 +20,7 @@ var inboxCmd = &cobra.Command{
 		}
 		projects := client.Project.FindByName("Inbox")
 		if len(projects) != 1 {
-			errors.New("Failed to detect inbox. It may exist multiple inbox.")
+			return errors.New("Failed to detect inbox. It may exist multiple inbox.")
 		}
 		inbox := projects[0]
 		items := client.Item.FindByProjectIDs([]todoist.ID{inbox.ID})
