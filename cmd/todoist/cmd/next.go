@@ -17,7 +17,12 @@ var nextCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		items := client.Item.FindByDueDate(todoist.Next7Days())
+		var items []todoist.Item
+		for _, i := range client.Item.FindByDueDate(todoist.Next7Days()) {
+			if !i.IsChecked() {
+				items = append(items, i)
+			}
+		}
 		sort.Slice(items, func(i, j int) bool {
 			return items[i].DueDateUtc.Before(items[j].DueDateUtc)
 		})
