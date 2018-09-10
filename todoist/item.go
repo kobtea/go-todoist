@@ -38,6 +38,13 @@ func (i Item) IsOverDueDate() bool {
 	return i.DueDateUtc.Before(Time{time.Now().UTC()})
 }
 
+func (i Item) IsChecked() bool {
+	if i.Checked == 1 {
+		return true
+	}
+	return false
+}
+
 type ItemClient struct {
 	*Client
 	cache *itemCache
