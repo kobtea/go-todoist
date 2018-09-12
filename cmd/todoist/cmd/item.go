@@ -55,9 +55,11 @@ var itemAddCmd = &cobra.Command{
 		if err != nil {
 			return errors.New("invalid label name")
 		}
-		for _, labelName := range strings.Split(labelNames, ",") {
-			if label := client.Label.FindOneByName(labelName); label != nil {
-				item.Labels = append(item.Labels, label.ID)
+		if len(labelNames) > 0 {
+			for _, labelName := range strings.Split(labelNames, ",") {
+				if label := client.Label.FindOneByName(labelName); label != nil {
+					item.Labels = append(item.Labels, label.ID)
+				}
 			}
 		}
 
