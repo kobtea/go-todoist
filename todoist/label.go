@@ -120,6 +120,9 @@ func (c *LabelClient) Resolve(id ID) *Label {
 }
 
 func (c LabelClient) FindByName(substr string) []Label {
+	if r := []rune(substr); len(r) > 0 && string(r[0]) == "@" {
+		substr = string(r[1:])
+	}
 	var res []Label
 	for _, l := range c.GetAll() {
 		if strings.Contains(l.Name, substr) {
@@ -127,6 +130,19 @@ func (c LabelClient) FindByName(substr string) []Label {
 		}
 	}
 	return res
+}
+
+func (c LabelClient) FindOneByName(substr string) *Label {
+	labels := c.FindByName(substr)
+	for _, label := range labels {
+		if label.Name == substr {
+			return &label
+		}
+	}
+	if len(labels) > 0 {
+		return &labels[0]
+	}
+	return nil
 }
 
 type labelCache struct {

@@ -45,10 +45,20 @@ var itemAddCmd = &cobra.Command{
 
 		projectName, err := cmd.Flags().GetString("project")
 		if err != nil {
-			return errors.New("invalid project id")
+			return errors.New("invalid project name")
 		}
 		if project := client.Project.FindOneByName(projectName); project != nil {
 			item.ProjectID = project.ID
+		}
+
+		labelNames, err := cmd.Flags().GetString("label")
+		if err != nil {
+			return errors.New("invalid label name")
+		}
+		for _, labelName := range strings.Split(labelNames, ",") {
+			if label := client.Label.FindOneByName(labelName); label != nil {
+				item.Labels = append(item.Labels, label.ID)
+			}
 		}
 
 		if _, err = client.Item.Add(item); err != nil {
@@ -187,6 +197,9 @@ func init() {
 	RootCmd.AddCommand(itemCmd)
 	itemCmd.AddCommand(itemListCmd)
 	itemAddCmd.Flags().StringP("project", "p", "inbox", "project name")
+	itemAddCmd.Flags().StringP("label", "l", "", "label name(s) (delimiter: ,)")
+	// itemAddCmd.Flags().StringP("due", "d", "", "due date")
+	// itemAddCmd.Flags().String("priority", "", "priority")
 	itemCmd.AddCommand(itemAddCmd)
 	itemCmd.AddCommand(itemDeleteCmd)
 	itemMoveCmd.Flags().StringP("project", "p", "", "project")
