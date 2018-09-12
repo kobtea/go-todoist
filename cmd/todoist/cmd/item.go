@@ -42,6 +42,15 @@ var itemAddCmd = &cobra.Command{
 		}
 		content := strings.Join(args, " ")
 		item := todoist.Item{Content: content}
+
+		projectName, err := cmd.Flags().GetString("project")
+		if err != nil {
+			return errors.New("invalid project id")
+		}
+		if project := client.Project.FindOneByName(projectName); project != nil {
+			item.ProjectID = project.ID
+		}
+
 		if _, err = client.Item.Add(item); err != nil {
 			return err
 		}
@@ -177,6 +186,7 @@ var itemUncompleteCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(itemCmd)
 	itemCmd.AddCommand(itemListCmd)
+	itemAddCmd.Flags().StringP("project", "p", "inbox", "project name")
 	itemCmd.AddCommand(itemAddCmd)
 	itemCmd.AddCommand(itemDeleteCmd)
 	itemMoveCmd.Flags().StringP("project", "p", "", "project")

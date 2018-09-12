@@ -194,6 +194,9 @@ func (c *ProjectClient) Resolve(id ID) *Project {
 }
 
 func (c ProjectClient) FindByName(substr string) []Project {
+	if r := []rune(substr); len(r) > 0 && string(r[0]) == "#" {
+		substr = string(r[1:])
+	}
 	var res []Project
 	for _, p := range c.GetAll() {
 		if strings.Contains(p.Name, substr) {
@@ -201,6 +204,19 @@ func (c ProjectClient) FindByName(substr string) []Project {
 		}
 	}
 	return res
+}
+
+func (c ProjectClient) FindOneByName(substr string) *Project {
+	projects := c.FindByName(substr)
+	for _, project := range projects {
+		if project.Name == substr {
+			return &project
+		}
+	}
+	if len(projects) > 0 {
+		return &projects[0]
+	}
+	return nil
 }
 
 type projectCache struct {
