@@ -63,6 +63,14 @@ var itemAddCmd = &cobra.Command{
 			}
 		}
 
+		due, err := cmd.Flags().GetString("due")
+		if err != nil {
+			return errors.New("invalid due date format")
+		}
+		if len(due) > 0 {
+			item.DateString = due
+		}
+
 		priority, err := cmd.Flags().GetInt("priority")
 		if err != nil {
 			return errors.New("invalid priority")
@@ -206,7 +214,7 @@ func init() {
 	itemCmd.AddCommand(itemListCmd)
 	itemAddCmd.Flags().StringP("project", "p", "inbox", "project name")
 	itemAddCmd.Flags().StringP("label", "l", "", "label name(s) (delimiter: ,)")
-	// itemAddCmd.Flags().StringP("due", "d", "", "due date")
+	itemAddCmd.Flags().StringP("due", "d", "", "due date")
 	itemAddCmd.Flags().Int("priority", 1, "priority")
 	itemCmd.AddCommand(itemAddCmd)
 	itemCmd.AddCommand(itemDeleteCmd)
