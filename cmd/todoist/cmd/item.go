@@ -61,6 +61,12 @@ var itemAddCmd = &cobra.Command{
 			}
 		}
 
+		priority, err := cmd.Flags().GetInt("priority")
+		if err != nil {
+			return errors.New("invalid priority")
+		}
+		item.Priority = priority
+
 		if _, err = client.Item.Add(item); err != nil {
 			return err
 		}
@@ -199,7 +205,7 @@ func init() {
 	itemAddCmd.Flags().StringP("project", "p", "inbox", "project name")
 	itemAddCmd.Flags().StringP("label", "l", "", "label name(s) (delimiter: ,)")
 	// itemAddCmd.Flags().StringP("due", "d", "", "due date")
-	// itemAddCmd.Flags().String("priority", "", "priority")
+	itemAddCmd.Flags().Int("priority", 1, "priority")
 	itemCmd.AddCommand(itemAddCmd)
 	itemCmd.AddCommand(itemDeleteCmd)
 	itemMoveCmd.Flags().StringP("project", "p", "", "project")
