@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -144,7 +145,9 @@ func (c *Client) Sync(ctx context.Context, commands []Command) error {
 	if err != nil {
 		return err
 	}
-
+	if (res.StatusCode / 100) != 2 {
+		return fmt.Errorf("failed to sync, status code: %d, command: %v", res.StatusCode, commands)
+	}
 	var out SyncState
 	err = decodeBody(res, &out)
 	if err != nil {
