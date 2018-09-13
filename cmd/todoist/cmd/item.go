@@ -103,6 +103,76 @@ var itemAddCmd = &cobra.Command{
 	},
 }
 
+var itemUpdateCmd = &cobra.Command{
+	Use:   "update id [new_content]",
+	Short: "update items",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			return errors.New("require item id to update")
+		}
+		id, err := todoist.NewID(args[0])
+		if err != nil {
+			return fmt.Errorf("invalid id: %s", args[0])
+		}
+		client, err := util.NewClient()
+		if err != nil {
+			return err
+		}
+		item := client.Item.Resolve(id)
+		if item == nil {
+			return fmt.Errorf("no such item id: %s", id)
+		}
+		if len(args) > 1 {
+			item.Content = strings.Join(args[1:], " ")
+		}
+
+		labelNames, err := cmd.Flags().GetString("label")
+		if err != nil {
+			return errors.New("invalid label name")
+		}
+		if len(labelNames) > 0 {
+			for _, labelName := range strings.Split(labelNames, ",") {
+				if label := client.Label.FindOneByName(labelName); label != nil {
+					item.Labels = append(item.Labels, label.ID)
+				}
+			}
+		}
+
+		due, err := cmd.Flags().GetString("due")
+		if err != nil {
+			return errors.New("invalid due date format")
+		}
+		if len(due) > 0 {
+			item.DateString = due
+		}
+
+		priority, err := cmd.Flags().GetInt("priority")
+		if err != nil {
+			return errors.New("invalid priority")
+		}
+		item.Priority = priority
+
+		if _, err = client.Item.Update(*item); err != nil {
+			return err
+		}
+		ctx := context.Background()
+		if err = client.Commit(ctx); err != nil {
+			return err
+		}
+		if err = client.FullSync(ctx, []todoist.Command{}); err != nil {
+			return err
+		}
+		syncedItem := client.Item.Resolve(id)
+		if syncedItem == nil {
+			return errors.New("failed to add this item. it may be failed to sync")
+		}
+		relations := client.Relation.Items([]todoist.Item{*syncedItem})
+		fmt.Println("success to update the item")
+		fmt.Println(util.ItemTableString([]todoist.Item{*syncedItem}, relations, func(i todoist.Item) todoist.Time { return i.DueDateUtc }))
+		return nil
+	},
+}
+
 var itemDeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "delete items",
@@ -217,6 +287,10 @@ func init() {
 	itemAddCmd.Flags().StringP("due", "d", "", "due date")
 	itemAddCmd.Flags().Int("priority", 1, "priority")
 	itemCmd.AddCommand(itemAddCmd)
+	itemUpdateCmd.Flags().StringP("label", "l", "", "label name(s) (delimiter: ,)")
+	itemUpdateCmd.Flags().StringP("due", "d", "", "due date")
+	itemUpdateCmd.Flags().Int("priority", 1, "priority")
+	itemCmd.AddCommand(itemUpdateCmd)
 	itemCmd.AddCommand(itemDeleteCmd)
 	itemMoveCmd.Flags().StringP("project", "p", "", "project")
 	itemCmd.AddCommand(itemMoveCmd)
