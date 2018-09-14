@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
 	"github.com/kobtea/go-todoist/cmd/util"
 	"github.com/kobtea/go-todoist/todoist"
 	"github.com/spf13/cobra"
+	"os"
 	"sort"
 	"strings"
 )
@@ -181,9 +183,30 @@ var itemDeleteCmd = &cobra.Command{
 			return util.ProcessIDs(
 				args,
 				func(ids []todoist.ID) error {
+					var items []todoist.Item
+					for _, id := range ids {
+						item := client.Item.Resolve(id)
+						if item == nil {
+							return fmt.Errorf("invalid id: %s", id)
+						}
+						items = append(items, *item)
+					}
+					relations := client.Relation.Items(items)
+					fmt.Println(util.ItemTableString(items, relations, func(i todoist.Item) todoist.Time { return i.DueDateUtc }))
+
+					reader := bufio.NewReader(os.Stdin)
+					fmt.Print("are you sure to delete above item(s)? (y/[n]): ")
+					ans, err := reader.ReadString('\n')
+					if ans != "y\n" || err != nil {
+						fmt.Println("abort")
+						return errors.New("abort")
+					}
 					return client.Item.Delete(ids)
 				})
 		}); err != nil {
+			if err.Error() == "abort" {
+				return nil
+			}
 			return err
 		}
 		fmt.Println("Successful deleting of item(s).")
