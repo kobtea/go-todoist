@@ -1,13 +1,14 @@
 package cmd
 
 import (
-	"fmt"
-
+	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"github.com/kobtea/go-todoist/cmd/util"
 	"github.com/kobtea/go-todoist/todoist"
 	"github.com/spf13/cobra"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -149,6 +150,23 @@ var filterDeleteCmd = &cobra.Command{
 			return util.ProcessIDs(
 				args,
 				func(ids []todoist.ID) error {
+					var filters []todoist.Filter
+					for _, id := range ids {
+						filter := client.Filter.Resolve(id)
+						if filter == nil {
+							return fmt.Errorf("invalid id: %s", id)
+						}
+						filters = append(filters, *filter)
+					}
+					fmt.Println(util.FilterTableString(filters))
+
+					reader := bufio.NewReader(os.Stdin)
+					fmt.Print("are you sure to delete above filter(s)? (y/[n]): ")
+					ans, err := reader.ReadString('\n')
+					if ans != "y\n" || err != nil {
+						fmt.Println("abort")
+						return errors.New("abort")
+					}
 					for _, id := range ids {
 						if err := client.Filter.Delete(id); err != nil {
 							return err
@@ -157,6 +175,9 @@ var filterDeleteCmd = &cobra.Command{
 					return nil
 				})
 		}); err != nil {
+			if err.Error() == "abort" {
+				return nil
+			}
 			return err
 		}
 		fmt.Println("Successful deleting of filter(s).")
