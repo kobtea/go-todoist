@@ -43,6 +43,24 @@ func (l Label) ColorString() string {
 	return color.New(attr).Sprint(l.String())
 }
 
+type Labels []Label
+
+func (ls Labels) String() string {
+	var arr []string
+	for _, l := range ls {
+		arr = append(arr, l.String())
+	}
+	return strings.Join(arr, " ")
+}
+
+func (ls Labels) ColorString() string {
+	var arr []string
+	for _, l := range ls {
+		arr = append(arr, l.ColorString())
+	}
+	return strings.Join(arr, " ")
+}
+
 type LabelClient struct {
 	*Client
 	cache *labelCache

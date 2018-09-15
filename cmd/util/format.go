@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
-	"strings"
 )
 
 func StringWidthWithoutColor(s string) int {
@@ -77,10 +76,10 @@ func ItemTableString(items []todoist.Item, relations todoist.ItemRelations, f fu
 		if v, ok := relations.Projects[i.ProjectID]; ok {
 			project = v
 		}
-		labels := []string{}
+		var labels todoist.Labels
 		for _, lid := range i.Labels {
 			if v, ok := relations.Labels[lid]; ok {
-				labels = append(labels, v.String())
+				labels = append(labels, v)
 			}
 		}
 		rows = append(rows, []todoist.ColorStringer{
@@ -88,7 +87,7 @@ func ItemTableString(items []todoist.Item, relations todoist.ItemRelations, f fu
 			f(i),
 			todoist.NewNoColorString(strconv.Itoa(i.Priority)),
 			project,
-			todoist.NewNoColorString(strings.Join(labels, " ")),
+			labels,
 			todoist.NewNoColorString(i.Content),
 		})
 	}
