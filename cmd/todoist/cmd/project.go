@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
 	"github.com/kobtea/go-todoist/cmd/util"
 	"github.com/kobtea/go-todoist/todoist"
 	"github.com/spf13/cobra"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -156,8 +158,32 @@ var projectDeleteCmd = &cobra.Command{
 	Short: "delete projects",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := util.AutoCommit(func(client todoist.Client, ctx context.Context) error {
-			return util.ProcessIDs(args, client.Project.Delete)
+			return util.ProcessIDs(
+				args,
+				func(ids []todoist.ID) error {
+					var projects []todoist.Project
+					for _, id := range ids {
+						project := client.Project.Resolve(id)
+						if project == nil {
+							return fmt.Errorf("invalid id: %s", id)
+						}
+						projects = append(projects, *project)
+					}
+					fmt.Println(util.ProjectTableString(projects))
+
+					reader := bufio.NewReader(os.Stdin)
+					fmt.Print("are you sure to delete above project(s)? (y/[n]): ")
+					ans, err := reader.ReadString('\n')
+					if ans != "y\n" || err != nil {
+						fmt.Println("abort")
+						return errors.New("abort")
+					}
+					return client.Project.Delete(ids)
+				})
 		}); err != nil {
+			if err.Error() == "abort" {
+				return nil
+			}
 			return err
 		}
 		fmt.Println("Successful deleting of project(s).")
