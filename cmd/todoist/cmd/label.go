@@ -1,13 +1,14 @@
 package cmd
 
 import (
-	"fmt"
-
+	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"github.com/kobtea/go-todoist/cmd/util"
 	"github.com/kobtea/go-todoist/todoist"
 	"github.com/spf13/cobra"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -138,6 +139,23 @@ var labelDeleteCmd = &cobra.Command{
 			return util.ProcessIDs(
 				args,
 				func(ids []todoist.ID) error {
+					var labels []todoist.Label
+					for _, id := range ids {
+						label := client.Label.Resolve(id)
+						if label == nil {
+							return fmt.Errorf("invalid id: %s", id)
+						}
+						labels = append(labels, *label)
+					}
+					fmt.Println(util.LabelTableString(labels))
+
+					reader := bufio.NewReader(os.Stdin)
+					fmt.Print("are you sure to delete above label(s)? (y/[n]): ")
+					ans, err := reader.ReadString('\n')
+					if ans != "y\n" || err != nil {
+						fmt.Println("abort")
+						return errors.New("abort")
+					}
 					for _, id := range ids {
 						if err := client.Label.Delete(id); err != nil {
 							return err
@@ -146,6 +164,9 @@ var labelDeleteCmd = &cobra.Command{
 					return nil
 				})
 		}); err != nil {
+			if err.Error() == "abort" {
+				return nil
+			}
 			return err
 		}
 		fmt.Println("Successful deleting of label(s).")
