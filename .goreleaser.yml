@@ -26,3 +26,4 @@ changelog:
     - '^docs:'
     - '^test:'
     - '^cut:'
+    - '^typo'
