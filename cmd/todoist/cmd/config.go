@@ -4,16 +4,13 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/kobtea/go-todoist/cmd/util"
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
 	"path"
 	"strings"
 )
-
-type config struct {
-	Token string `json:"token"`
-}
 
 // configCmd represents the config command
 var configCmd = &cobra.Command{
@@ -26,7 +23,7 @@ var configCmd = &cobra.Command{
 				return err
 			}
 		}
-		var c config
+		var c util.Config
 		file := path.Join(dir, "config.json")
 		if b, err := ioutil.ReadFile(file); err != nil {
 			// initial config
