@@ -39,7 +39,7 @@
 
 [[constraint]]
   name = "github.com/spf13/cobra"
-  version = "0.0.3"
+  revision = "6fd8e29b07d8242ebe2888060fede5766e240c25"
 
 [[constraint]]
   name = "github.com/spf13/viper"

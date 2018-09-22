@@ -77,14 +77,6 @@
   version = "v0.0.3"
 
 [[projects]]
-  digest = "1:78bbb1ba5b7c3f2ed0ea1eab57bdd3859aec7e177811563edc41198a760b06af"
-  name = "github.com/mitchellh/go-homedir"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "ae18d6b8b3205b561c79e8e5f69bff09736185f4"
-  version = "v1.0.0"
-
-[[projects]]
   digest = "1:645110e089152bd0f4a011a2648fbb0e4df5977be73ca605781157ac297f50c4"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
@@ -128,12 +120,11 @@
   version = "v1.2.0"
 
 [[projects]]
-  digest = "1:645cabccbb4fa8aab25a956cbcbdf6a6845ca736b2c64e197ca7cbb9d210b939"
+  digest = "1:14701e2f3e9f352e3750241102904e97c68fcbe06b2e16ad5e29fe54b39d666a"
   name = "github.com/spf13/cobra"
   packages = ["."]
   pruneopts = "UT"
-  revision = "ef82de70bb3f60c65fb8eebacbb2d122ef517385"
-  version = "v0.0.3"
+  revision = "6fd8e29b07d8242ebe2888060fede5766e240c25"
 
 [[projects]]
   branch = "master"
@@ -196,7 +187,6 @@
   input-imports = [
     "github.com/fatih/color",
     "github.com/mattn/go-runewidth",
-    "github.com/mitchellh/go-homedir",
     "github.com/satori/go.uuid",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
