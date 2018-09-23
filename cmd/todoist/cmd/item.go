@@ -45,22 +45,30 @@ var itemAddCmd = &cobra.Command{
 		content := strings.Join(args, " ")
 		item := todoist.Item{Content: content}
 
-		projectName, err := cmd.Flags().GetString("project")
+		projectIDorName, err := cmd.Flags().GetString("project")
 		if err != nil {
-			return errors.New("invalid project name")
+			return errors.New("invalid project id or name")
 		}
-		if project := client.Project.FindOneByName(projectName); project != nil {
-			item.ProjectID = project.ID
+		if pid, err := todoist.NewID(projectIDorName); err != nil {
+			if project := client.Project.FindOneByName(projectIDorName); project != nil {
+				item.ProjectID = project.ID
+			}
+		} else {
+			item.ProjectID = pid
 		}
 
-		labelNames, err := cmd.Flags().GetString("label")
+		labelIDorNames, err := cmd.Flags().GetString("label")
 		if err != nil {
-			return errors.New("invalid label name")
+			return errors.New("invalid label id(s) or name(s)")
 		}
-		if len(labelNames) > 0 {
-			for _, labelName := range strings.Split(labelNames, ",") {
-				if label := client.Label.FindOneByName(labelName); label != nil {
-					item.Labels = append(item.Labels, label.ID)
+		if len(labelIDorNames) > 0 {
+			for _, labelIDorName := range strings.Split(labelIDorNames, ",") {
+				if lid, err := todoist.NewID(labelIDorName); err != nil {
+					if label := client.Label.FindOneByName(labelIDorName); label != nil {
+						item.Labels = append(item.Labels, label.ID)
+					}
+				} else {
+					item.Labels = append(item.Labels, lid)
 				}
 			}
 		}
@@ -128,14 +136,18 @@ var itemUpdateCmd = &cobra.Command{
 			item.Content = strings.Join(args[1:], " ")
 		}
 
-		labelNames, err := cmd.Flags().GetString("label")
+		labelIDorNames, err := cmd.Flags().GetString("label")
 		if err != nil {
-			return errors.New("invalid label name")
+			return errors.New("invalid label id(s) or name(s)")
 		}
-		if len(labelNames) > 0 {
-			for _, labelName := range strings.Split(labelNames, ",") {
-				if label := client.Label.FindOneByName(labelName); label != nil {
-					item.Labels = append(item.Labels, label.ID)
+		if len(labelIDorNames) > 0 {
+			for _, labelIDorName := range strings.Split(labelIDorNames, ",") {
+				if lid, err := todoist.NewID(labelIDorName); err != nil {
+					if label := client.Label.FindOneByName(labelIDorName); label != nil {
+						item.Labels = append(item.Labels, label.ID)
+					}
+				} else {
+					item.Labels = append(item.Labels, lid)
 				}
 			}
 		}
@@ -305,12 +317,12 @@ var itemUncompleteCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(itemCmd)
 	itemCmd.AddCommand(itemListCmd)
-	itemAddCmd.Flags().StringP("project", "p", "inbox", "project name")
-	itemAddCmd.Flags().StringP("label", "l", "", "label name(s) (delimiter: ,)")
+	itemAddCmd.Flags().StringP("project", "p", "inbox", "project id or name")
+	itemAddCmd.Flags().StringP("label", "l", "", "label id or name(s) (delimiter: ,)")
 	itemAddCmd.Flags().StringP("due", "d", "", "due date")
 	itemAddCmd.Flags().Int("priority", 1, "priority")
 	itemCmd.AddCommand(itemAddCmd)
-	itemUpdateCmd.Flags().StringP("label", "l", "", "label name(s) (delimiter: ,)")
+	itemUpdateCmd.Flags().StringP("label", "l", "", "label id(s) or name(s) (delimiter: ,)")
 	itemUpdateCmd.Flags().StringP("due", "d", "", "due date")
 	itemUpdateCmd.Flags().Int("priority", 1, "priority")
 	itemCmd.AddCommand(itemUpdateCmd)
