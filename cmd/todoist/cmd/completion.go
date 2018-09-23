@@ -6,6 +6,65 @@ import (
 	"os"
 )
 
+const (
+	bashCompletionFunc = `
+__todoist_select_one() {
+	fzf
+}
+
+__todoist_select_multi() {
+	fzf -m
+}
+
+__todoist_filter_ids() {
+	COMPREPLY=( $(todoist filter list | __todoist_select_multi | awk '{print $1}' | tr '\n' ' ') )
+}
+
+__todoist_item_ids() {
+	COMPREPLY=( $(todoist item list | __todoist_select_multi | awk '{print $1}' | tr '\n' ' ') )
+}
+
+__todoist_label_id() {
+	COMPREPLY=( $(todoist label list | __todoist_select_one | awk '{print $1}') )
+}
+
+__todoist_labels_ids() {
+	COMPREPLY=( $(todoist label list | __todoist_select_multi | awk '{print $1}' | tr '\n' ' ') )
+}
+
+__todoist_project_id() {
+	COMPREPLY=( $(todoist project list | __todoist_select_one | awk '{print $1}') )
+}
+
+__todoist_project_ids() {
+	COMPREPLY=( $(todoist project list | __todoist_select_multi | awk '{print $1}' | tr '\n' ' ') )
+}
+
+__todoist_custom_func() {
+	case ${last_command} in
+		todoist_filter_update | todoist_filter_delete)
+			__todoist_filter_ids
+			return
+			;;
+		todoist_item_update | todoist_item_delete | todoist_item_move | todoist_item_complete | todoist_item_uncomplete)
+			__todoist_item_ids
+			return
+			;;
+		todoist_label_update | todoist_label_delete)
+			__todoist_label_ids
+			return
+			;;
+		todoist_project_update | todoist_project_delete | todoist_project_archive | todoist_project_unarchive)
+			__todoist_project_ids
+			return
+			;;
+		*)
+			;;
+	esac
+}
+`
+)
+
 // completionCmd represents the completion command
 var completionCmd = &cobra.Command{
 	Use:   "completion",

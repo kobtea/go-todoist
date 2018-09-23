@@ -318,16 +318,20 @@ func init() {
 	RootCmd.AddCommand(itemCmd)
 	itemCmd.AddCommand(itemListCmd)
 	itemAddCmd.Flags().StringP("project", "p", "inbox", "project id or name")
+	itemAddCmd.Flag("project").Annotations = map[string][]string{cobra.BashCompCustom: {"__todoist_project_id"}}
 	itemAddCmd.Flags().StringP("label", "l", "", "label id or name(s) (delimiter: ,)")
+	itemAddCmd.Flag("label").Annotations = map[string][]string{cobra.BashCompCustom: {"__todoist_label_id"}}
 	itemAddCmd.Flags().StringP("due", "d", "", "due date")
 	itemAddCmd.Flags().Int("priority", 1, "priority")
 	itemCmd.AddCommand(itemAddCmd)
 	itemUpdateCmd.Flags().StringP("label", "l", "", "label id(s) or name(s) (delimiter: ,)")
+	itemUpdateCmd.Flag("label").Annotations = map[string][]string{cobra.BashCompCustom: {"__todoist_label_id"}}
 	itemUpdateCmd.Flags().StringP("due", "d", "", "due date")
 	itemUpdateCmd.Flags().Int("priority", 1, "priority")
 	itemCmd.AddCommand(itemUpdateCmd)
 	itemCmd.AddCommand(itemDeleteCmd)
 	itemMoveCmd.Flags().StringP("project", "p", "", "project")
+	itemMoveCmd.Flag("project").Annotations = map[string][]string{cobra.BashCompCustom: {"__todoist_project_id"}}
 	itemCmd.AddCommand(itemMoveCmd)
 	itemCmd.AddCommand(itemCompleteCmd)
 	itemCmd.AddCommand(itemUncompleteCmd)

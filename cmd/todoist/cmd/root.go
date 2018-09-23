@@ -13,6 +13,7 @@ var cfgFile string
 var RootCmd = &cobra.Command{
 	Use:   "todoist",
 	Short: "Command line tool for todoist.",
+	BashCompletionFunction: bashCompletionFunc,
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
