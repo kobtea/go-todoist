@@ -74,7 +74,8 @@ $ todoist item add hello go-todoist
 $ todoist inbox
 ```
 
-Bash and zsh completion are supported ;)
+Bash and zsh completion are supported ;)  
+Completion requires [fzf](https://github.com/junegunn/fzf).
 
 ```bash
 # bash
