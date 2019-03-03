@@ -35,12 +35,8 @@ release: $(GORELEASER)
 	$(GORELEASER) release --rm-dist --debug
 
 $(DEP):
-	go get -u github.com/golang/dep/cmd/dep
+	curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 
-$(GORELEASER): $(DEP)
-	go get golang.org/x/tools/cmd/stringer
-	go get -d github.com/goreleaser/goreleaser
-	cd $(GOPATH)/src/github.com/goreleaser/goreleaser && \
-	$(DEP) ensure -vendor-only && \
-	make build && \
-	mv ./goreleaser $(GOPATH)/bin
+$(GORELEASER):
+	@wget -O - "https://github.com/goreleaser/goreleaser/releases/download/v0.95.0/goreleaser_$(shell uname -o | cut -d'/' -f2)_$(shell uname -m).tar.gz" | tar xvzf - -C /tmp
+	@mv /tmp/goreleaser $(GOPATH)/bin

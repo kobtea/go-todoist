@@ -1,6 +1,6 @@
 defaults: &defaults
   docker:
-  - image: circleci/golang:1.11
+  - image: circleci/golang:1.12
   working_directory: /go/src/github.com/kobtea/go-todoist
 
 version: 2
