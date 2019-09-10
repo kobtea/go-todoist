@@ -8,32 +8,20 @@ import (
 	"time"
 )
 
-var marshalTimes = []struct {
+var testTimes = []struct {
 	s string
 	v Time
 	e error
 }{
 	{
-		s: "2014-09-26T08:25",
-		v: Time{time.Date(2014, 9, 26, 8, 25, 5, 0, time.UTC)},
-		e: nil,
-	},
-}
-
-var unmarshalTimes = []struct {
-	s string
-	v Time
-	e error
-}{
-	{
-		s: "Fri 26 Sep 2014 08:25:05 +0000",
+		s: "2014-09-26T08:25:05Z",
 		v: Time{time.Date(2014, 9, 26, 8, 25, 5, 0, time.UTC)},
 		e: nil,
 	},
 }
 
 func TestParse(t *testing.T) {
-	for i, tt := range unmarshalTimes {
+	for i, tt := range testTimes {
 		tim, err := Parse(tt.s)
 		if !reflect.DeepEqual(err, tt.e) {
 			t.Errorf("%d. %q error mismatch:\n exp=%s\n got=%s\n\n", i, tt.s, tt.e, err)
@@ -41,18 +29,10 @@ func TestParse(t *testing.T) {
 			t.Errorf("%d. %q mismatch:\n exp=%#v\n got=%#v\n\n", i, tt.s, tt.v, tim)
 		}
 	}
-	for i, tt := range marshalTimes {
-		tim, err := Parse(tt.s)
-		if !reflect.DeepEqual(err, tt.e) {
-			t.Errorf("%d. %q error mismatch:\n exp=%s\n got=%s\n\n", i, tt.s, tt.e, err)
-		} else if tt.e == nil && !tim.Equal(Time{tt.v.Truncate(time.Minute)}) {
-			t.Errorf("%d. %q mismatch:\n exp=%#v\n got=%#v\n\n", i, tt.s, tt.v, tim)
-		}
-	}
 }
 
 func TestTime_MarshalJSON(t *testing.T) {
-	for _, tt := range marshalTimes {
+	for _, tt := range testTimes {
 		b, err := tt.v.MarshalJSON()
 		if err != nil || string(b) != strconv.Quote(tt.s) {
 			t.Errorf("Expect %s, but got %s", strconv.Quote(tt.s), string(b))
@@ -65,7 +45,7 @@ func TestTime_MarshalJSON(t *testing.T) {
 }
 
 func TestTime_UnmarshalJSON(t *testing.T) {
-	for _, test := range unmarshalTimes {
+	for _, test := range testTimes {
 		var v Time
 		err := v.UnmarshalJSON([]byte(strconv.Quote(test.s)))
 		if !reflect.DeepEqual(err, test.e) {
@@ -85,7 +65,7 @@ func TestTime_UnmarshalJSON(t *testing.T) {
 }
 
 func TestTimeJson(t *testing.T) {
-	for _, tt := range marshalTimes {
+	for _, tt := range testTimes {
 		m, err := json.Marshal(tt.v)
 		if err != nil {
 			t.Errorf("unexpected error: %s", err.Error())
@@ -93,9 +73,7 @@ func TestTimeJson(t *testing.T) {
 		if !reflect.DeepEqual(string(m), strconv.Quote(tt.s)) {
 			t.Errorf("mismatch:\n exp=%#v\n got=%#v\n\n", strconv.Quote(tt.s), string(m))
 		}
-	}
 
-	for _, tt := range unmarshalTimes {
 		var um Time
 		if err := json.Unmarshal([]byte(strconv.Quote(tt.s)), &um); err != nil {
 			t.Errorf("unexpected error: %s", err.Error())
