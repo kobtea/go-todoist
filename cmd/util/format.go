@@ -96,7 +96,7 @@ func ItemTableString(items []todoist.Item, relations todoist.ItemRelations, f fu
 
 func ProjectTableString(projects []todoist.Project) string {
 	sort.Slice(projects, func(i, j int) bool {
-		return projects[i].ItemOrder < projects[j].ItemOrder
+		return projects[i].ChildOrder < projects[j].ChildOrder
 	})
 	var rows [][]todoist.ColorStringer
 	for _, p := range projects {

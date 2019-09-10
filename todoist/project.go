@@ -14,8 +14,8 @@ type Project struct {
 	Entity
 	Name         string `json:"name"`
 	Color        int    `json:"color"`
-	Indent       int    `json:"indent"`
-	ItemOrder    int    `json:"item_order"`
+	ChildOrder   int    `json:"child_order"`
+	ParentID     ID     `json:"parent_id"` // FIXME: nullable
 	Collapsed    int    `json:"collapsed"`
 	Shared       bool   `json:"shared"`
 	IsArchived   int    `json:"is_archived"`
@@ -24,7 +24,7 @@ type Project struct {
 }
 
 func (p Project) String() string {
-	return strings.Repeat(" ", p.Indent-1) + "#" + p.Name
+	return /* FIXME: strings.Repeat(" ", p.Indent-1) + */ "#" + p.Name
 }
 
 func (p Project) ColorString() string {
@@ -84,36 +84,36 @@ func (c *ProjectClient) Update(project Project) (*Project, error) {
 	return &project, nil
 }
 
-func (c *ProjectClient) Delete(ids []ID) error {
+func (c *ProjectClient) Delete(id ID) error {
 	command := Command{
 		Type: "project_delete",
 		UUID: GenerateUUID(),
-		Args: map[string][]ID{
-			"ids": ids,
+		Args: map[string]ID{
+			"id": id,
 		},
 	}
 	c.queue = append(c.queue, command)
 	return nil
 }
 
-func (c *ProjectClient) Archive(ids []ID) error {
+func (c *ProjectClient) Archive(id ID) error {
 	command := Command{
 		Type: "project_archive",
 		UUID: GenerateUUID(),
-		Args: map[string][]ID{
-			"ids": ids,
+		Args: map[string]ID{
+			"id": id,
 		},
 	}
 	c.queue = append(c.queue, command)
 	return nil
 }
 
-func (c *ProjectClient) Unarchive(ids []ID) error {
+func (c *ProjectClient) Unarchive(id ID) error {
 	command := Command{
 		Type: "project_unarchive",
 		UUID: GenerateUUID(),
-		Args: map[string][]ID{
-			"ids": ids,
+		Args: map[string]ID{
+			"id": id,
 		},
 	}
 	c.queue = append(c.queue, command)
