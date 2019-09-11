@@ -25,7 +25,7 @@ var inboxCmd = &cobra.Command{
 		inbox := projects[0]
 		items := client.Item.FindByProjectIDs([]todoist.ID{inbox.ID})
 		relations := client.Relation.Items(items)
-		fmt.Println(util.ItemTableString(items, relations, func(i todoist.Item) todoist.Time { return i.DueDateUtc }))
+		fmt.Println(util.ItemTableString(items, relations, func(i todoist.Item) todoist.Time { return i.Due.Date }))
 		return nil
 	},
 }

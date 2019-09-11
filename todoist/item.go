@@ -12,30 +12,34 @@ import (
 
 type Item struct {
 	Entity
-	UserID         ID     `json:"user_id,omitempty"`
-	ProjectID      ID     `json:"project_id,omitempty"`
-	Content        string `json:"content"`
-	DateString     string `json:"date_string,omitempty"`
-	DateLang       string `json:"date_lang,omitempty"`
-	DueDateUtc     Time   `json:"due_date_utc,omitempty"`
-	Priority       int    `json:"priority,omitempty"`
-	Indent         int    `json:"indent,omitempty"`
-	ItemOrder      int    `json:"item_order,omitempty"`
-	DayOrder       int    `json:"day_order,omitempty"`
-	Collapsed      int    `json:"collapsed,omitempty"`
-	Labels         []ID   `json:"labels,omitempty"`
-	AssignedByUID  ID     `json:"assigned_by_uid,omitempty"`
-	ResponsibleUID ID     `json:"responsible_uid,omitempty"`
-	Checked        int    `json:"checked,omitempty"`
-	InHistory      int    `json:"in_history,omitempty"`
-	IsArchived     int    `json:"is_archived,omitempty"`
-	SyncID         int    `json:"sync_id,omitempty"`
-	DateAdded      Time   `json:"date_added,omitempty"`
-	CompletedDate  Time   `json:"completed_date"`
+	UserID    ID     `json:"user_id,omitempty"`
+	ProjectID ID     `json:"project_id,omitempty"`
+	Content   string `json:"content"`
+	Due       struct {
+		Date        Time   `json:"date"`
+		Timezone    string `json:"timezone"`
+		IsRecurring bool   `json:"is_recurring"`
+		String      string `json:"string"`
+		Lang        string `json:"lang"`
+	} `json:"due,omitempty"`
+	Priority       int  `json:"priority,omitempty"`
+	Indent         int  `json:"indent,omitempty"`
+	ItemOrder      int  `json:"item_order,omitempty"`
+	DayOrder       int  `json:"day_order,omitempty"`
+	Collapsed      int  `json:"collapsed,omitempty"`
+	Labels         []ID `json:"labels,omitempty"`
+	AssignedByUID  ID   `json:"assigned_by_uid,omitempty"`
+	ResponsibleUID ID   `json:"responsible_uid,omitempty"`
+	Checked        int  `json:"checked,omitempty"`
+	InHistory      int  `json:"in_history,omitempty"`
+	IsArchived     int  `json:"is_archived,omitempty"`
+	SyncID         int  `json:"sync_id,omitempty"`
+	DateAdded      Time `json:"date_added,omitempty"`
+	CompletedDate  Time `json:"completed_date"`
 }
 
 func (i Item) IsOverDueDate() bool {
-	return i.DueDateUtc.Before(Time{time.Now().UTC()})
+	return i.Due.Date.Before(Time{time.Now().UTC()})
 }
 
 func (i Item) IsChecked() bool {
@@ -232,7 +236,7 @@ func (c ItemClient) FindByContent(substr string) []Item {
 func (c ItemClient) FindByDueDate(time Time) []Item {
 	var res []Item
 	for _, i := range c.GetAll() {
-		if !i.DueDateUtc.IsZero() && i.DueDateUtc.Before(time) {
+		if !i.Due.Date.IsZero() && i.Due.Date.Before(time) {
 			res = append(res, i)
 		}
 	}

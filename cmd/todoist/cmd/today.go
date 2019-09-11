@@ -24,10 +24,10 @@ var todayCmd = &cobra.Command{
 			}
 		}
 		sort.Slice(items, func(i, j int) bool {
-			return items[i].DueDateUtc.Before(items[j].DueDateUtc)
+			return items[i].Due.Date.Before(items[j].Due.Date)
 		})
 		relations := client.Relation.Items(items)
-		fmt.Println(util.ItemTableString(items, relations, func(i todoist.Item) todoist.Time { return i.DueDateUtc }))
+		fmt.Println(util.ItemTableString(items, relations, func(i todoist.Item) todoist.Time { return i.Due.Date }))
 		return nil
 	},
 }
