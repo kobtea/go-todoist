@@ -23,8 +23,8 @@ type Item struct {
 		Lang        string `json:"lang"`
 	} `json:"due,omitempty"`
 	Priority       int  `json:"priority,omitempty"`
-	Indent         int  `json:"indent,omitempty"`
-	ItemOrder      int  `json:"item_order,omitempty"`
+	ParentID       ID   `json:"parent_id,omitempty"`
+	ChildOrder     int  `json:"child_order,omitempty"`
 	DayOrder       int  `json:"day_order,omitempty"`
 	Collapsed      int  `json:"collapsed,omitempty"`
 	Labels         []ID `json:"labels,omitempty"`
@@ -32,7 +32,6 @@ type Item struct {
 	ResponsibleUID ID   `json:"responsible_uid,omitempty"`
 	Checked        int  `json:"checked,omitempty"`
 	InHistory      int  `json:"in_history,omitempty"`
-	IsArchived     int  `json:"is_archived,omitempty"`
 	SyncID         int  `json:"sync_id,omitempty"`
 	DateAdded      Time `json:"date_added,omitempty"`
 	CompletedDate  Time `json:"completed_date"`
@@ -84,12 +83,12 @@ func (c *ItemClient) Update(item Item) (*Item, error) {
 	return &item, nil
 }
 
-func (c *ItemClient) Delete(ids []ID) error {
+func (c *ItemClient) Delete(id ID) error {
 	command := Command{
 		Type: "item_delete",
 		UUID: GenerateUUID(),
-		Args: map[string][]ID{
-			"ids": ids,
+		Args: map[string]ID{
+			"id": id,
 		},
 	}
 	c.queue = append(c.queue, command)
@@ -128,20 +127,12 @@ func (c *ItemClient) Complete(ids []ID, forceHistory bool) error {
 	return nil
 }
 
-func (c *ItemClient) Uncomplete(ids []ID, updateItemOrders bool, restoreState map[ID][]string) error {
-	var uio int
-	if updateItemOrders {
-		uio = 1
-	} else {
-		uio = 0
-	}
+func (c *ItemClient) Uncomplete(id ID) error {
 	command := Command{
 		Type: "item_uncomplete",
 		UUID: GenerateUUID(),
 		Args: map[string]interface{}{
-			"ids":                ids,
-			"update_item_orders": uio,
-			"restore_state":      restoreState,
+			"id": id,
 		},
 	}
 	c.queue = append(c.queue, command)
