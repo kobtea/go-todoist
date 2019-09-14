@@ -11,6 +11,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"time"
 )
 
 // itemCmd represents the item command
@@ -280,11 +281,16 @@ var itemCompleteCmd = &cobra.Command{
 	Short: "complete items",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := util.AutoCommit(func(client todoist.Client, ctx context.Context) error {
-			return util.ProcessIDs(
-				args,
-				func(ids []todoist.ID) error {
-					return client.Item.Complete(ids, true)
-				})
+			if len(args) != 1 {
+				return fmt.Errorf("require one item id")
+			}
+			id, err := todoist.NewID(args[0])
+			if err != nil {
+				return err
+			}
+			// FIXME: support date_completed option
+			date := todoist.Time{time.Now().UTC()}
+			return client.Item.Complete(id, date, true)
 		}); err != nil {
 			return err
 		}

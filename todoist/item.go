@@ -108,7 +108,7 @@ func (c *ItemClient) Move(projectItems map[ID][]ID, toProject ID) error {
 	return nil
 }
 
-func (c *ItemClient) Complete(ids []ID, forceHistory bool) error {
+func (c *ItemClient) Complete(id ID, dateCompleted Time, forceHistory bool) error {
 	var fh int
 	if forceHistory {
 		fh = 1
@@ -119,8 +119,9 @@ func (c *ItemClient) Complete(ids []ID, forceHistory bool) error {
 		Type: "item_complete",
 		UUID: GenerateUUID(),
 		Args: map[string]interface{}{
-			"ids":           ids,
-			"force_history": fh,
+			"id":             id,
+			"date_completed": dateCompleted,
+			"force_history":  fh,
 		},
 	}
 	c.queue = append(c.queue, command)
