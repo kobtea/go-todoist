@@ -87,7 +87,7 @@ $ . <(todoist completion zsh)
 
 ## As a Library
 
-This library supports [sync api v7](https://developer.todoist.com/sync/v7).  
+This library supports [sync api v8](https://developer.todoist.com/sync/v8).  
 Implementation refers to [python official library](https://github.com/doist/todoist-python).
 
 sample
