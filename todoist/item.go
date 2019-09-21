@@ -95,14 +95,32 @@ func (c *ItemClient) Delete(id ID) error {
 	return nil
 }
 
-func (c *ItemClient) Move(projectItems map[ID][]ID, toProject ID) error {
+type ItemMoveOpts struct {
+	ParentID  ID
+	ProjectID ID
+}
+
+func (c *ItemClient) Move(id ID, opts *ItemMoveOpts) error {
+	switch len(opts.ParentID) + len(opts.ProjectID) {
+	case 0:
+		return errors.New("require parent item id or project id")
+	case 2:
+		return errors.New("require either parent item id or project id")
+	}
+	args := map[string]interface{}{
+		"id": id,
+	}
+	if len(opts.ParentID) != 0 {
+		args["parent_id"] = opts.ParentID
+	}
+	if len(opts.ProjectID) != 0 {
+		args["project_id"] = opts.ProjectID
+	}
+
 	command := Command{
 		Type: "item_move",
 		UUID: GenerateUUID(),
-		Args: map[string]interface{}{
-			"project_items": projectItems,
-			"to_project":    toProject,
-		},
+		Args: args,
 	}
 	c.queue = append(c.queue, command)
 	return nil

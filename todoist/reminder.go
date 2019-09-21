@@ -2,10 +2,10 @@ package todoist
 
 type Reminder struct {
 	Entity
-	NotifyUID  ID     `json:"notify_uid"`
-	ItemID     ID     `json:"item_id"`
-	Service    string `json:"service"`
-	Type       string `json:"type"`
+	NotifyUID ID     `json:"notify_uid"`
+	ItemID    ID     `json:"item_id"`
+	Service   string `json:"service"`
+	Type      string `json:"type"`
 	Due       struct {
 		Date        Time   `json:"date"`
 		Timezone    string `json:"timezone"`

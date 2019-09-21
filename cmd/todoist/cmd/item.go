@@ -244,18 +244,23 @@ var itemMoveCmd = &cobra.Command{
 		if item == nil {
 			return fmt.Errorf("No such item id: %s", id)
 		}
-		pidstr, err := cmd.Flags().GetString("project")
-		if err != nil {
-			return errors.New("Invalid project id")
+
+		opts := &todoist.ItemMoveOpts{}
+		if parentID, err := cmd.Flags().GetString("parent"); err == nil {
+			if id, err := todoist.NewID(parentID); err != nil {
+				return fmt.Errorf("invalid parent id: %s", parentID)
+			} else {
+				opts.ParentID = id
+			}
 		}
-		if len(pidstr) == 0 {
-			return errors.New("Require project ID to move")
+		if projectID, err := cmd.Flags().GetString("project"); err == nil {
+			if id, err  := todoist.NewID(projectID); err != nil {
+				return fmt.Errorf("invalid project id: %s", projectID)
+			} else {
+				opts.ProjectID = id
+			}
 		}
-		pid, err := todoist.NewID(pidstr)
-		if err != nil {
-			return fmt.Errorf("Invalid ID: %s", args[0])
-		}
-		if err = client.Item.Move(map[todoist.ID][]todoist.ID{item.ProjectID: {item.ID}}, pid); err != nil {
+		if err = client.Item.Move(id, opts); err != nil {
 			return err
 		}
 		ctx := context.Background()
@@ -336,7 +341,9 @@ func init() {
 	itemUpdateCmd.Flags().Int("priority", 1, "priority")
 	itemCmd.AddCommand(itemUpdateCmd)
 	itemCmd.AddCommand(itemDeleteCmd)
-	itemMoveCmd.Flags().StringP("project", "p", "", "project")
+	itemMoveCmd.Flags().StringP("parent", "i", "", "parent item id")
+	itemMoveCmd.Flag("item").Annotations = map[string][]string{cobra.BashCompCustom: {"__todoist_item_id"}}
+	itemMoveCmd.Flags().StringP("project", "p", "", "project id")
 	itemMoveCmd.Flag("project").Annotations = map[string][]string{cobra.BashCompCustom: {"__todoist_project_id"}}
 	itemCmd.AddCommand(itemMoveCmd)
 	itemCmd.AddCommand(itemCompleteCmd)
