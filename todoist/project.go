@@ -14,8 +14,8 @@ type Project struct {
 	Entity
 	Name         string `json:"name"`
 	Color        int    `json:"color"`
-	Indent       int    `json:"indent"`
-	ItemOrder    int    `json:"item_order"`
+	ChildOrder   int    `json:"child_order"`
+	ParentID     ID     `json:"parent_id"` // FIXME: nullable
 	Collapsed    int    `json:"collapsed"`
 	Shared       bool   `json:"shared"`
 	IsArchived   int    `json:"is_archived"`
@@ -24,27 +24,26 @@ type Project struct {
 }
 
 func (p Project) String() string {
-	return strings.Repeat(" ", p.Indent-1) + "#" + p.Name
+	return /* FIXME: strings.Repeat(" ", p.Indent-1) + */ "#" + p.Name
 }
 
 func (p Project) ColorString() string {
 	var attr color.Attribute
 	switch p.Color {
-	case 20, 21:
-		attr = color.FgHiBlack
-	case 1, 8, 14:
+	case 30, 31:
 		attr = color.FgHiRed
-	case 0, 15, 16:
-		attr = color.FgHiGreen
-	case 2, 3, 9:
+	case 32, 33:
 		attr = color.FgHiYellow
-	case 17, 18, 19:
-		attr = color.FgHiBlue
-	case 6, 12, 13:
-		attr = color.FgHiMagenta
-	case 4, 10, 11:
+	case 34, 35, 36:
+		attr = color.FgHiGreen
+	case 37, 38, 39:
 		attr = color.FgHiCyan
-	case 5, 7:
+	case 40, 41, 42:
+		attr = color.FgHiBlue
+	case 43, 44, 45, 46:
+		attr = color.FgHiMagenta
+	case 47, 48, 49:
+		attr = color.FgHiBlack
 	default:
 		attr = color.FgWhite
 	}
@@ -85,36 +84,36 @@ func (c *ProjectClient) Update(project Project) (*Project, error) {
 	return &project, nil
 }
 
-func (c *ProjectClient) Delete(ids []ID) error {
+func (c *ProjectClient) Delete(id ID) error {
 	command := Command{
 		Type: "project_delete",
 		UUID: GenerateUUID(),
-		Args: map[string][]ID{
-			"ids": ids,
+		Args: map[string]ID{
+			"id": id,
 		},
 	}
 	c.queue = append(c.queue, command)
 	return nil
 }
 
-func (c *ProjectClient) Archive(ids []ID) error {
+func (c *ProjectClient) Archive(id ID) error {
 	command := Command{
 		Type: "project_archive",
 		UUID: GenerateUUID(),
-		Args: map[string][]ID{
-			"ids": ids,
+		Args: map[string]ID{
+			"id": id,
 		},
 	}
 	c.queue = append(c.queue, command)
 	return nil
 }
 
-func (c *ProjectClient) Unarchive(ids []ID) error {
+func (c *ProjectClient) Unarchive(id ID) error {
 	command := Command{
 		Type: "project_unarchive",
 		UUID: GenerateUUID(),
-		Args: map[string][]ID{
-			"ids": ids,
+		Args: map[string]ID{
+			"id": id,
 		},
 	}
 	c.queue = append(c.queue, command)

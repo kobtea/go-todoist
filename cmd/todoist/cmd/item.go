@@ -11,6 +11,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"time"
 )
 
 // itemCmd represents the item command
@@ -29,7 +30,7 @@ var itemListCmd = &cobra.Command{
 		}
 		items := client.Item.GetAll()
 		relations := client.Relation.Items(items)
-		fmt.Println(util.ItemTableString(items, relations, func(i todoist.Item) todoist.Time { return i.DueDateUtc }))
+		fmt.Println(util.ItemTableString(items, relations, func(i todoist.Item) todoist.Time { return i.Due.Date }))
 		return nil
 	},
 }
@@ -78,7 +79,7 @@ var itemAddCmd = &cobra.Command{
 			return errors.New("invalid due date format")
 		}
 		if len(due) > 0 {
-			item.DateString = due
+			item.Due.String = due
 		}
 
 		priority, err := cmd.Flags().GetInt("priority")
@@ -108,7 +109,7 @@ var itemAddCmd = &cobra.Command{
 		syncedItem := items[len(items)-1]
 		relations := client.Relation.Items([]todoist.Item{syncedItem})
 		fmt.Println("Successful addition of an item.")
-		fmt.Println(util.ItemTableString([]todoist.Item{syncedItem}, relations, func(i todoist.Item) todoist.Time { return i.DueDateUtc }))
+		fmt.Println(util.ItemTableString([]todoist.Item{syncedItem}, relations, func(i todoist.Item) todoist.Time { return i.Due.Date }))
 		return nil
 	},
 }
@@ -157,7 +158,7 @@ var itemUpdateCmd = &cobra.Command{
 			return errors.New("invalid due date format")
 		}
 		if len(due) > 0 {
-			item.DateString = due
+			item.Due.String = due
 		}
 
 		priority, err := cmd.Flags().GetInt("priority")
@@ -182,7 +183,7 @@ var itemUpdateCmd = &cobra.Command{
 		}
 		relations := client.Relation.Items([]todoist.Item{*syncedItem})
 		fmt.Println("success to update the item")
-		fmt.Println(util.ItemTableString([]todoist.Item{*syncedItem}, relations, func(i todoist.Item) todoist.Time { return i.DueDateUtc }))
+		fmt.Println(util.ItemTableString([]todoist.Item{*syncedItem}, relations, func(i todoist.Item) todoist.Time { return i.Due.Date }))
 		return nil
 	},
 }
@@ -192,29 +193,27 @@ var itemDeleteCmd = &cobra.Command{
 	Short: "delete items",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := util.AutoCommit(func(client todoist.Client, ctx context.Context) error {
-			return util.ProcessIDs(
-				args,
-				func(ids []todoist.ID) error {
-					var items []todoist.Item
-					for _, id := range ids {
-						item := client.Item.Resolve(id)
-						if item == nil {
-							return fmt.Errorf("invalid id: %s", id)
-						}
-						items = append(items, *item)
-					}
-					relations := client.Relation.Items(items)
-					fmt.Println(util.ItemTableString(items, relations, func(i todoist.Item) todoist.Time { return i.DueDateUtc }))
-
-					reader := bufio.NewReader(os.Stdin)
-					fmt.Print("are you sure to delete above item(s)? (y/[n]): ")
-					ans, err := reader.ReadString('\n')
-					if ans != "y\n" || err != nil {
-						fmt.Println("abort")
-						return errors.New("abort")
-					}
-					return client.Item.Delete(ids)
-				})
+			if len(args) != 1 {
+				return fmt.Errorf("require one item id")
+			}
+			id, err := todoist.NewID(args[0])
+			if err != nil {
+				return err
+			}
+			item := client.Item.Resolve(id)
+			if item == nil {
+				return fmt.Errorf("invalid id: %s", id)
+			}
+			relations := client.Relation.Items([]todoist.Item{*item})
+			fmt.Println(util.ItemTableString([]todoist.Item{*item}, relations, func(i todoist.Item) todoist.Time { return i.Due.Date }))
+			reader := bufio.NewReader(os.Stdin)
+			fmt.Print("are you sure to delete above item(s)? (y/[n]): ")
+			ans, err := reader.ReadString('\n')
+			if ans != "y\n" || err != nil {
+				fmt.Println("abort")
+				return errors.New("abort")
+			}
+			return client.Item.Delete(id)
 		}); err != nil {
 			if err.Error() == "abort" {
 				return nil
@@ -245,18 +244,23 @@ var itemMoveCmd = &cobra.Command{
 		if item == nil {
 			return fmt.Errorf("No such item id: %s", id)
 		}
-		pidstr, err := cmd.Flags().GetString("project")
-		if err != nil {
-			return errors.New("Invalid project id")
+
+		opts := &todoist.ItemMoveOpts{}
+		if parentID, err := cmd.Flags().GetString("parent"); err == nil {
+			if id, err := todoist.NewID(parentID); err != nil {
+				return fmt.Errorf("invalid parent id: %s", parentID)
+			} else {
+				opts.ParentID = id
+			}
 		}
-		if len(pidstr) == 0 {
-			return errors.New("Require project ID to move")
+		if projectID, err := cmd.Flags().GetString("project"); err == nil {
+			if id, err  := todoist.NewID(projectID); err != nil {
+				return fmt.Errorf("invalid project id: %s", projectID)
+			} else {
+				opts.ProjectID = id
+			}
 		}
-		pid, err := todoist.NewID(pidstr)
-		if err != nil {
-			return fmt.Errorf("Invalid ID: %s", args[0])
-		}
-		if err = client.Item.Move(map[todoist.ID][]todoist.ID{item.ProjectID: {item.ID}}, pid); err != nil {
+		if err = client.Item.Move(id, opts); err != nil {
 			return err
 		}
 		ctx := context.Background()
@@ -272,7 +276,7 @@ var itemMoveCmd = &cobra.Command{
 		}
 		relations := client.Relation.Items([]todoist.Item{*syncedItem})
 		fmt.Println("Successful move item.")
-		fmt.Println(util.ItemTableString([]todoist.Item{*syncedItem}, relations, func(i todoist.Item) todoist.Time { return i.DueDateUtc }))
+		fmt.Println(util.ItemTableString([]todoist.Item{*syncedItem}, relations, func(i todoist.Item) todoist.Time { return i.Due.Date }))
 		return nil
 	},
 }
@@ -282,11 +286,16 @@ var itemCompleteCmd = &cobra.Command{
 	Short: "complete items",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := util.AutoCommit(func(client todoist.Client, ctx context.Context) error {
-			return util.ProcessIDs(
-				args,
-				func(ids []todoist.ID) error {
-					return client.Item.Complete(ids, true)
-				})
+			if len(args) != 1 {
+				return fmt.Errorf("require one item id")
+			}
+			id, err := todoist.NewID(args[0])
+			if err != nil {
+				return err
+			}
+			// FIXME: support date_completed option
+			date := todoist.Time{time.Now().UTC()}
+			return client.Item.Complete(id, date, true)
 		}); err != nil {
 			return err
 		}
@@ -300,12 +309,14 @@ var itemUncompleteCmd = &cobra.Command{
 	Short: "uncomplete items",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := util.AutoCommit(func(client todoist.Client, ctx context.Context) error {
-			return util.ProcessIDs(
-				args,
-				func(ids []todoist.ID) error {
-					restoreState := map[todoist.ID][]string{}
-					return client.Item.Uncomplete(ids, true, restoreState)
-				})
+			if len(args) != 1 {
+				return fmt.Errorf("require one item id")
+			}
+			id, err := todoist.NewID(args[0])
+			if err != nil {
+				return err
+			}
+			return client.Item.Uncomplete(id)
 		}); err != nil {
 			return err
 		}
@@ -330,7 +341,9 @@ func init() {
 	itemUpdateCmd.Flags().Int("priority", 1, "priority")
 	itemCmd.AddCommand(itemUpdateCmd)
 	itemCmd.AddCommand(itemDeleteCmd)
-	itemMoveCmd.Flags().StringP("project", "p", "", "project")
+	itemMoveCmd.Flags().StringP("parent", "i", "", "parent item id")
+	itemMoveCmd.Flag("item").Annotations = map[string][]string{cobra.BashCompCustom: {"__todoist_item_id"}}
+	itemMoveCmd.Flags().StringP("project", "p", "", "project id")
 	itemMoveCmd.Flag("project").Annotations = map[string][]string{cobra.BashCompCustom: {"__todoist_project_id"}}
 	itemCmd.AddCommand(itemMoveCmd)
 	itemCmd.AddCommand(itemCompleteCmd)

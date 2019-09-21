@@ -12,30 +12,33 @@ import (
 
 type Item struct {
 	Entity
-	UserID         ID     `json:"user_id,omitempty"`
-	ProjectID      ID     `json:"project_id,omitempty"`
-	Content        string `json:"content"`
-	DateString     string `json:"date_string,omitempty"`
-	DateLang       string `json:"date_lang,omitempty"`
-	DueDateUtc     Time   `json:"due_date_utc,omitempty"`
-	Priority       int    `json:"priority,omitempty"`
-	Indent         int    `json:"indent,omitempty"`
-	ItemOrder      int    `json:"item_order,omitempty"`
-	DayOrder       int    `json:"day_order,omitempty"`
-	Collapsed      int    `json:"collapsed,omitempty"`
-	Labels         []ID   `json:"labels,omitempty"`
-	AssignedByUID  ID     `json:"assigned_by_uid,omitempty"`
-	ResponsibleUID ID     `json:"responsible_uid,omitempty"`
-	Checked        int    `json:"checked,omitempty"`
-	InHistory      int    `json:"in_history,omitempty"`
-	IsArchived     int    `json:"is_archived,omitempty"`
-	SyncID         int    `json:"sync_id,omitempty"`
-	DateAdded      Time   `json:"date_added,omitempty"`
-	CompletedDate  Time   `json:"completed_date"`
+	UserID    ID     `json:"user_id,omitempty"`
+	ProjectID ID     `json:"project_id,omitempty"`
+	Content   string `json:"content"`
+	Due       struct {
+		Date        Time   `json:"date"`
+		Timezone    string `json:"timezone"`
+		IsRecurring bool   `json:"is_recurring"`
+		String      string `json:"string"`
+		Lang        string `json:"lang"`
+	} `json:"due,omitempty"`
+	Priority       int  `json:"priority,omitempty"`
+	ParentID       ID   `json:"parent_id,omitempty"`
+	ChildOrder     int  `json:"child_order,omitempty"`
+	DayOrder       int  `json:"day_order,omitempty"`
+	Collapsed      int  `json:"collapsed,omitempty"`
+	Labels         []ID `json:"labels,omitempty"`
+	AssignedByUID  ID   `json:"assigned_by_uid,omitempty"`
+	ResponsibleUID ID   `json:"responsible_uid,omitempty"`
+	Checked        int  `json:"checked,omitempty"`
+	InHistory      int  `json:"in_history,omitempty"`
+	SyncID         int  `json:"sync_id,omitempty"`
+	DateAdded      Time `json:"date_added,omitempty"`
+	CompletedDate  Time `json:"completed_date"`
 }
 
 func (i Item) IsOverDueDate() bool {
-	return i.DueDateUtc.Before(Time{time.Now().UTC()})
+	return i.Due.Date.Before(Time{time.Now().UTC()})
 }
 
 func (i Item) IsChecked() bool {
@@ -80,32 +83,50 @@ func (c *ItemClient) Update(item Item) (*Item, error) {
 	return &item, nil
 }
 
-func (c *ItemClient) Delete(ids []ID) error {
+func (c *ItemClient) Delete(id ID) error {
 	command := Command{
 		Type: "item_delete",
 		UUID: GenerateUUID(),
-		Args: map[string][]ID{
-			"ids": ids,
+		Args: map[string]ID{
+			"id": id,
 		},
 	}
 	c.queue = append(c.queue, command)
 	return nil
 }
 
-func (c *ItemClient) Move(projectItems map[ID][]ID, toProject ID) error {
+type ItemMoveOpts struct {
+	ParentID  ID
+	ProjectID ID
+}
+
+func (c *ItemClient) Move(id ID, opts *ItemMoveOpts) error {
+	switch len(opts.ParentID) + len(opts.ProjectID) {
+	case 0:
+		return errors.New("require parent item id or project id")
+	case 2:
+		return errors.New("require either parent item id or project id")
+	}
+	args := map[string]interface{}{
+		"id": id,
+	}
+	if len(opts.ParentID) != 0 {
+		args["parent_id"] = opts.ParentID
+	}
+	if len(opts.ProjectID) != 0 {
+		args["project_id"] = opts.ProjectID
+	}
+
 	command := Command{
 		Type: "item_move",
 		UUID: GenerateUUID(),
-		Args: map[string]interface{}{
-			"project_items": projectItems,
-			"to_project":    toProject,
-		},
+		Args: args,
 	}
 	c.queue = append(c.queue, command)
 	return nil
 }
 
-func (c *ItemClient) Complete(ids []ID, forceHistory bool) error {
+func (c *ItemClient) Complete(id ID, dateCompleted Time, forceHistory bool) error {
 	var fh int
 	if forceHistory {
 		fh = 1
@@ -116,28 +137,21 @@ func (c *ItemClient) Complete(ids []ID, forceHistory bool) error {
 		Type: "item_complete",
 		UUID: GenerateUUID(),
 		Args: map[string]interface{}{
-			"ids":           ids,
-			"force_history": fh,
+			"id":             id,
+			"date_completed": dateCompleted,
+			"force_history":  fh,
 		},
 	}
 	c.queue = append(c.queue, command)
 	return nil
 }
 
-func (c *ItemClient) Uncomplete(ids []ID, updateItemOrders bool, restoreState map[ID][]string) error {
-	var uio int
-	if updateItemOrders {
-		uio = 1
-	} else {
-		uio = 0
-	}
+func (c *ItemClient) Uncomplete(id ID) error {
 	command := Command{
 		Type: "item_uncomplete",
 		UUID: GenerateUUID(),
 		Args: map[string]interface{}{
-			"ids":                ids,
-			"update_item_orders": uio,
-			"restore_state":      restoreState,
+			"id": id,
 		},
 	}
 	c.queue = append(c.queue, command)
@@ -232,7 +246,7 @@ func (c ItemClient) FindByContent(substr string) []Item {
 func (c ItemClient) FindByDueDate(time Time) []Item {
 	var res []Item
 	for _, i := range c.GetAll() {
-		if !i.DueDateUtc.IsZero() && i.DueDateUtc.Before(time) {
+		if !i.Due.Date.IsZero() && i.Due.Date.Before(time) {
 			res = append(res, i)
 		}
 	}

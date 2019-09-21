@@ -56,6 +56,7 @@ var projectAddCmd = &cobra.Command{
 			}
 			project.Color = color
 		}
+		/* FIXME
 		indentStr, err := cmd.Flags().GetString("indent")
 		if err != nil {
 			return errors.New("Invalid project indent")
@@ -67,6 +68,7 @@ var projectAddCmd = &cobra.Command{
 			}
 			project.Indent = i
 		}
+		*/
 		if _, err = client.Project.Add(project); err != nil {
 			return err
 		}
@@ -122,17 +124,19 @@ var projectUpdateCmd = &cobra.Command{
 			}
 			project.Color = color
 		}
-		indentStr, err := cmd.Flags().GetString("indent")
-		if err != nil {
-			return errors.New("Invalid project indent")
-		}
-		if len(indentStr) > 0 {
-			i, err := strconv.Atoi(indentStr)
+		/*
+			indentStr, err := cmd.Flags().GetString("indent")
 			if err != nil {
-				return fmt.Errorf("Invalid project indent: %s", indentStr)
+				return errors.New("Invalid project indent")
 			}
-			project.Indent = i
-		}
+			if len(indentStr) > 0 {
+				i, err := strconv.Atoi(indentStr)
+				if err != nil {
+					return fmt.Errorf("Invalid project indent: %s", indentStr)
+				}
+				project.Indent = i
+			}
+		*/
 		if _, err = client.Project.Update(*project); err != nil {
 			return err
 		}
@@ -154,32 +158,31 @@ var projectUpdateCmd = &cobra.Command{
 }
 
 var projectDeleteCmd = &cobra.Command{
-	Use:   "delete id [...]",
-	Short: "delete projects",
+	Use:   "delete id",
+	Short: "delete project",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := util.AutoCommit(func(client todoist.Client, ctx context.Context) error {
-			return util.ProcessIDs(
-				args,
-				func(ids []todoist.ID) error {
-					var projects []todoist.Project
-					for _, id := range ids {
-						project := client.Project.Resolve(id)
-						if project == nil {
-							return fmt.Errorf("invalid id: %s", id)
-						}
-						projects = append(projects, *project)
-					}
-					fmt.Println(util.ProjectTableString(projects))
+			if len(args) != 1 {
+				return fmt.Errorf("require one project id")
+			}
+			id, err := todoist.NewID(args[0])
+			if err != nil {
+				return err
+			}
+			project := client.Project.Resolve(id)
+			if project == nil {
+				return fmt.Errorf("invalid id: %s", id)
+			}
+			fmt.Println(util.ProjectTableString([]todoist.Project{*project}))
 
-					reader := bufio.NewReader(os.Stdin)
-					fmt.Print("are you sure to delete above project(s)? (y/[n]): ")
-					ans, err := reader.ReadString('\n')
-					if ans != "y\n" || err != nil {
-						fmt.Println("abort")
-						return errors.New("abort")
-					}
-					return client.Project.Delete(ids)
-				})
+			reader := bufio.NewReader(os.Stdin)
+			fmt.Print("are you sure to delete above project(s)? (y/[n]): ")
+			ans, err := reader.ReadString('\n')
+			if ans != "y\n" || err != nil {
+				fmt.Println("abort")
+				return errors.New("abort")
+			}
+			return client.Project.Delete(id)
 		}); err != nil {
 			if err.Error() == "abort" {
 				return nil
@@ -192,11 +195,18 @@ var projectDeleteCmd = &cobra.Command{
 }
 
 var projectArchiveCmd = &cobra.Command{
-	Use:   "archive id [...]",
-	Short: "archive projects",
+	Use:   "archive id",
+	Short: "archive project",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := util.AutoCommit(func(client todoist.Client, ctx context.Context) error {
-			return util.ProcessIDs(args, client.Project.Archive)
+			if len(args) != 1 {
+				return fmt.Errorf("require one project id")
+			}
+			id, err := todoist.NewID(args[0])
+			if err != nil {
+				return err
+			}
+			return client.Project.Archive(id)
 		}); err != nil {
 			return err
 		}
@@ -206,11 +216,18 @@ var projectArchiveCmd = &cobra.Command{
 }
 
 var projectUnarchiveCmd = &cobra.Command{
-	Use:   "unarchive id [...]",
-	Short: "unarchive projects",
+	Use:   "unarchive id",
+	Short: "unarchive project",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := util.AutoCommit(func(client todoist.Client, ctx context.Context) error {
-			return util.ProcessIDs(args, client.Project.Unarchive)
+			if len(args) != 1 {
+				return fmt.Errorf("require one project id")
+			}
+			id, err := todoist.NewID(args[0])
+			if err != nil {
+				return err
+			}
+			return client.Project.Unarchive(id)
 		}); err != nil {
 			return err
 		}
@@ -222,11 +239,11 @@ var projectUnarchiveCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(projectCmd)
 	projectCmd.AddCommand(projectListCmd)
-	projectAddCmd.Flags().StringP("color", "c", "7", "color")
-	projectAddCmd.Flags().StringP("indent", "i", "1", "indent")
+	projectAddCmd.Flags().StringP("color", "c", "47", "color")
+	// FIXME: projectAddCmd.Flags().StringP("indent", "i", "1", "indent")
 	projectCmd.AddCommand(projectAddCmd)
 	projectUpdateCmd.Flags().StringP("color", "c", "", "color")
-	projectUpdateCmd.Flags().StringP("indent", "i", "", "indent")
+	// FIXME: projectUpdateCmd.Flags().StringP("indent", "i", "", "indent")
 	projectCmd.AddCommand(projectUpdateCmd)
 	projectCmd.AddCommand(projectDeleteCmd)
 	projectCmd.AddCommand(projectArchiveCmd)
