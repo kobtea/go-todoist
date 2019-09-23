@@ -342,7 +342,7 @@ func init() {
 	itemCmd.AddCommand(itemUpdateCmd)
 	itemCmd.AddCommand(itemDeleteCmd)
 	itemMoveCmd.Flags().StringP("parent", "i", "", "parent item id")
-	itemMoveCmd.Flag("item").Annotations = map[string][]string{cobra.BashCompCustom: {"__todoist_item_id"}}
+	itemMoveCmd.Flag("parent").Annotations = map[string][]string{cobra.BashCompCustom: {"__todoist_item_id"}}
 	itemMoveCmd.Flags().StringP("project", "p", "", "project id")
 	itemMoveCmd.Flag("project").Annotations = map[string][]string{cobra.BashCompCustom: {"__todoist_project_id"}}
 	itemCmd.AddCommand(itemMoveCmd)

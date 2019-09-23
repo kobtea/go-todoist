@@ -20,6 +20,10 @@ __todoist_filter_ids() {
 	COMPREPLY=( $(todoist filter list | __todoist_select_multi | awk '{print $1}' | tr '\n' ' ') )
 }
 
+__todoist_item_id() {
+	COMPREPLY=( $(todoist item list | __todoist_select_one | awk '{print $1}') )
+}
+
 __todoist_item_ids() {
 	COMPREPLY=( $(todoist item list | __todoist_select_multi | awk '{print $1}' | tr '\n' ' ') )
 }
