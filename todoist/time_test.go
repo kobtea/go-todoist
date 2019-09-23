@@ -18,6 +18,11 @@ var testTimes = []struct {
 		v: Time{time.Date(2014, 9, 26, 8, 25, 5, 0, time.UTC)},
 		e: nil,
 	},
+	{
+		s: "2014-09-26",
+		v: Time{time.Date(2014, 9, 26, 0,0,0,0,time.UTC)},
+		e: nil,
+	},
 }
 
 func TestParse(t *testing.T) {

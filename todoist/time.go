@@ -7,7 +7,9 @@ import (
 )
 
 const (
-	localLayout = "2006-01-02(Mon) 15:04"
+	dateLayout     = "2006-01-02"
+	datetimeLayout = time.RFC3339
+	localLayout    = "2006-01-02(Mon) 15:04"
 )
 
 type Time struct {
@@ -27,7 +29,10 @@ func Next7Days() Time {
 }
 
 func Parse(value string) (Time, error) {
-	t, err := time.Parse(time.RFC3339, value)
+	t, err := time.Parse(datetimeLayout, value)
+	if err != nil {
+		t, err = time.Parse(dateLayout, value)
+	}
 	if err != nil {
 		return Time{}, err
 	}
@@ -54,7 +59,11 @@ func (t Time) MarshalJSON() ([]byte, error) {
 	if t.IsZero() {
 		return []byte("null"), nil
 	}
-	return []byte(strconv.Quote(t.Time.Format(time.RFC3339))), nil
+	layout := datetimeLayout
+	if t.Hour() == 0 && t.Minute() == 0 && t.Second() == 0 {
+		layout = dateLayout
+	}
+	return []byte(strconv.Quote(t.Time.Format(layout))), nil
 }
 
 func (t *Time) UnmarshalJSON(b []byte) (err error) {
