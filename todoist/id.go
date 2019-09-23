@@ -37,6 +37,11 @@ func IsValidID(id ID) bool {
 	return false
 }
 
+func (i ID) IsZero() bool {
+	s := string(i)
+	return s == "0" || s == ""
+}
+
 func (i ID) String() string {
 	return string(i)
 }
@@ -46,8 +51,9 @@ func (i ID) MarshalJSON() ([]byte, error) {
 	if IsTempID(i) {
 		s = `"` + s + `"`
 	}
-	if s == "0" || s == "" {
+	if i.IsZero() {
 		s = "null"
+
 	}
 	return []byte(s), nil
 }

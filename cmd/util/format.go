@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 )
 
 func StringWidthWithoutColor(s string) int {
@@ -95,14 +96,19 @@ func ItemTableString(items []todoist.Item, relations todoist.ItemRelations, f fu
 }
 
 func ProjectTableString(projects []todoist.Project) string {
-	sort.Slice(projects, func(i, j int) bool {
-		return projects[i].ChildOrder < projects[j].ChildOrder
-	})
 	var rows [][]todoist.ColorStringer
+	indentMaps := map[string]int{}
 	for _, p := range projects {
+		indent := 0
+		if !p.ParentID.IsZero() {
+			if i, ok := indentMaps[p.ParentID.String()]; ok {
+				indent = i + 1
+			}
+		}
+		indentMaps[p.ID.String()] = indent
 		rows = append(rows, []todoist.ColorStringer{
 			todoist.NewNoColorString(p.ID.String()),
-			p,
+			todoist.NewNoColorString(strings.Repeat(" ", indent) + p.ColorString()),
 		})
 	}
 	return TableString(rows)

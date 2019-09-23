@@ -3,7 +3,6 @@ package todoist
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/fatih/color"
 	"net/http"
 	"net/url"
@@ -12,19 +11,46 @@ import (
 
 type Project struct {
 	Entity
-	Name         string `json:"name"`
-	Color        int    `json:"color"`
-	ChildOrder   int    `json:"child_order"`
-	ParentID     ID     `json:"parent_id"` // FIXME: nullable
-	Collapsed    int    `json:"collapsed"`
-	Shared       bool   `json:"shared"`
-	IsArchived   int    `json:"is_archived"`
-	InboxProject bool   `json:"inbox_project"`
-	TeamInbox    bool   `json:"team_inbox"`
+	Name         string  `json:"name"`
+	Color        int     `json:"color"`
+	ChildOrder   int     `json:"child_order"`
+	ParentID     ID      `json:"parent_id"`
+	Collapsed    IntBool `json:"collapsed"`
+	Shared       bool    `json:"shared"`
+	IsArchived   IntBool `json:"is_archived"`
+	IsFavorite   IntBool `json:"is_favorite"`
+	InboxProject bool    `json:"inbox_project"`
+	TeamInbox    bool    `json:"team_inbox"`
+}
+
+type NewProjectOpts struct {
+	Color      int
+	ParentID   ID
+	ChildOrder int
+	IsFavorite IntBool
+}
+
+func NewProject(name string, opts *NewProjectOpts) (*Project, error) {
+	if len(name) == 0 {
+		return nil, errors.New("new project requires a name")
+	}
+	project := Project{
+		Name:       name,
+		ParentID:   opts.ParentID,
+		ChildOrder: opts.ChildOrder,
+		IsFavorite: opts.IsFavorite,
+	}
+	project.ID = GenerateTempID()
+	if opts.Color == 0 {
+		project.Color = 47
+	} else {
+		project.Color = opts.Color
+	}
+	return &project, nil
 }
 
 func (p Project) String() string {
-	return /* FIXME: strings.Repeat(" ", p.Indent-1) + */ "#" + p.Name
+	return "#" + p.Name
 }
 
 func (p Project) ColorString() string {
@@ -56,10 +82,6 @@ type ProjectClient struct {
 }
 
 func (c *ProjectClient) Add(project Project) (*Project, error) {
-	if len(project.Name) == 0 {
-		return nil, errors.New("New project requires a name")
-	}
-	project.ID = GenerateTempID()
 	c.cache.store(project)
 	command := Command{
 		Type:   "project_add",
@@ -72,9 +94,6 @@ func (c *ProjectClient) Add(project Project) (*Project, error) {
 }
 
 func (c *ProjectClient) Update(project Project) (*Project, error) {
-	if !IsValidID(project.ID) {
-		return nil, fmt.Errorf("Invalid id: %s", project.ID)
-	}
 	command := Command{
 		Type: "project_update",
 		Args: project,
@@ -82,6 +101,20 @@ func (c *ProjectClient) Update(project Project) (*Project, error) {
 	}
 	c.queue = append(c.queue, command)
 	return &project, nil
+}
+
+func (c *ProjectClient) Move(id, parentID ID) error {
+	command := Command{
+		Type: "project_move",
+		UUID: GenerateUUID(),
+		Args: map[string]ID{
+			"id":        id,
+			"parent_id": parentID,
+		},
+	}
+	c.queue = append(c.queue, command)
+	return nil
+
 }
 
 func (c *ProjectClient) Delete(id ID) error {
@@ -114,6 +147,18 @@ func (c *ProjectClient) Unarchive(id ID) error {
 		UUID: GenerateUUID(),
 		Args: map[string]ID{
 			"id": id,
+		},
+	}
+	c.queue = append(c.queue, command)
+	return nil
+}
+
+func (c *ProjectClient) Reorder(projects []Project) error {
+	command := Command{
+		Type: "project_reorder",
+		UUID: GenerateUUID(),
+		Args: map[string][]Project{
+			"projects": projects,
 		},
 	}
 	c.queue = append(c.queue, command)
