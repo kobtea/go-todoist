@@ -25,7 +25,7 @@ var testIDs = []struct {
 	{
 		"invalid",
 		"",
-		errors.New("Invalid ID: invalid"),
+		errors.New("invalid id: invalid"),
 	},
 }
 
