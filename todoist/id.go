@@ -12,7 +12,7 @@ func NewID(id string) (ID, error) {
 	if IsValidID(ID(id)) {
 		return ID(id), nil
 	}
-	return "", fmt.Errorf("Invalid ID: %s", id)
+	return "", fmt.Errorf("invalid id: %s", id)
 }
 
 func NewIDs(ids []string) ([]ID, error) {

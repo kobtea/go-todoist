@@ -59,7 +59,7 @@ __todoist_custom_func() {
 			return
 			;;
 		todoist_project_update | todoist_project_delete | todoist_project_archive | todoist_project_unarchive)
-			__todoist_project_ids
+			__todoist_project_id
 			return
 			;;
 		*)
