@@ -3,7 +3,6 @@ package todoist
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/fatih/color"
 	"net/http"
 	"net/url"
@@ -12,10 +11,11 @@ import (
 
 type Filter struct {
 	Entity
-	Name      string `json:"name"`
-	Query     string `json:"query"`
-	Color     int    `json:"color"`
-	ItemOrder int    `json:"item_order"`
+	Name       string  `json:"name"`
+	Query      string  `json:"query"`
+	Color      int     `json:"color"`
+	ItemOrder  int     `json:"item_order"`
+	IsFavorite IntBool `json:"is_favorite"`
 }
 
 func (f Filter) String() string {
@@ -25,23 +25,49 @@ func (f Filter) String() string {
 func (f Filter) ColorString() string {
 	var attr color.Attribute
 	switch f.Color {
-	case 2, 4, 10:
+	case 30, 31:
 		attr = color.FgHiRed
-	case 0, 11:
-		attr = color.FgHiGreen
-	case 1:
+	case 32, 33:
 		attr = color.FgHiYellow
-	case 5, 8:
-		attr = color.FgHiBlue
-	case 3:
-		attr = color.FgHiMagenta
-	case 6, 9:
+	case 34, 35, 36:
+		attr = color.FgHiGreen
+	case 37, 38, 39:
 		attr = color.FgHiCyan
-	case 7, 12:
-	default:
+	case 40, 41, 42:
+		attr = color.FgHiBlue
+	case 43, 44, 45, 46:
+		attr = color.FgHiMagenta
+	case 47, 48, 49:
 		attr = color.FgHiBlack
+	default:
+		attr = color.FgWhite
 	}
 	return color.New(attr).Sprint(f.String())
+}
+
+type NewFilterOpts struct {
+	Color      int
+	ItemOrder  int
+	IsFavorite IntBool
+}
+
+func NewFilter(name, query string, opts *NewFilterOpts) (*Filter, error) {
+	if len(name) == 0 || len(query) == 0 {
+		return nil, errors.New("new filter requires a name and a query")
+	}
+	filter := Filter{
+		Name:       name,
+		Query:      query,
+		ItemOrder:  opts.ItemOrder,
+		IsFavorite: opts.IsFavorite,
+	}
+	filter.ID = GenerateTempID()
+	if opts.Color == 0 {
+		filter.Color = 47
+	} else {
+		filter.Color = opts.Color
+	}
+	return &filter, nil
 }
 
 type FilterClient struct {
@@ -50,13 +76,6 @@ type FilterClient struct {
 }
 
 func (c *FilterClient) Add(filter Filter) (*Filter, error) {
-	if len(filter.Name) == 0 {
-		return nil, errors.New("New filter requires a name")
-	}
-	if len(filter.Query) == 0 {
-		return nil, errors.New("New filter requires a query")
-	}
-	filter.ID = GenerateTempID()
 	c.cache.store(filter)
 	command := Command{
 		Type:   "filter_add",
@@ -69,9 +88,6 @@ func (c *FilterClient) Add(filter Filter) (*Filter, error) {
 }
 
 func (c *FilterClient) Update(filter Filter) (*Filter, error) {
-	if !IsValidID(filter.ID) {
-		return nil, fmt.Errorf("Invalid id: %s", filter.ID)
-	}
 	command := Command{
 		Type: "filter_update",
 		Args: filter,
@@ -87,6 +103,22 @@ func (c *FilterClient) Delete(id ID) error {
 		UUID: GenerateUUID(),
 		Args: map[string]ID{
 			"id": id,
+		},
+	}
+	c.queue = append(c.queue, command)
+	return nil
+}
+
+func (c *FilterClient) UpdateOrders(filters []Filter) error {
+	args := map[ID]int{}
+	for _, filter := range filters {
+		args[filter.ID] = filter.ItemOrder
+	}
+	command := Command{
+		Type: "filter_update_orders",
+		UUID: GenerateUUID(),
+		Args: map[string]map[ID]int{
+			"id_order_mapping": args,
 		},
 	}
 	c.queue = append(c.queue, command)
