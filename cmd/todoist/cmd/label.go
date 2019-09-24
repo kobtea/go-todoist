@@ -9,7 +9,6 @@ import (
 	"github.com/kobtea/go-todoist/todoist"
 	"github.com/spf13/cobra"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -34,7 +33,7 @@ var labelListCmd = &cobra.Command{
 }
 
 var labelAddCmd = &cobra.Command{
-	Use:   "add",
+	Use:   "add [name]",
 	Short: "add label",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client, err := util.NewClient()
@@ -42,21 +41,29 @@ var labelAddCmd = &cobra.Command{
 			return err
 		}
 		name := strings.Join(args, " ")
-		label := todoist.Label{
-			Name: name,
+		if len(name) == 0 {
+			return errors.New("require label name")
 		}
-		colorStr, err := cmd.Flags().GetString("color")
+		opts := todoist.NewLabelOpts{}
+		if color, err := cmd.Flags().GetInt("color"); err != nil {
+			return err
+		} else {
+			opts.Color = color
+		}
+		if order, err := cmd.Flags().GetInt("order"); err != nil {
+			opts.ItemOrder = order
+		}
+		if favorite, err := cmd.Flags().GetBool("favorite"); err != nil {
+			opts.IsFavorite = todoist.IntBool(favorite)
+		}
+		label, err := todoist.NewLabel(name, &opts)
+		if label == nil {
+			return errors.New("failed to initialize a label")
+		}
 		if err != nil {
-			return errors.New("Invalid label color")
+			return err
 		}
-		if len(colorStr) > 0 {
-			color, err := strconv.Atoi(colorStr)
-			if err != nil {
-				return fmt.Errorf("Invalid label color: %s", colorStr)
-			}
-			label.Color = color
-		}
-		if _, err = client.Label.Add(label); err != nil {
+		if _, err := client.Label.Add(*label); err != nil {
 			return err
 		}
 		ctx := context.Background()
@@ -68,48 +75,69 @@ var labelAddCmd = &cobra.Command{
 		}
 		labels := client.Label.FindByName(name)
 		if len(labels) == 0 {
-			return errors.New("Failed to add this label. It may be failed to sync.")
+			return errors.New("failed to add this label. it may be failed to sync")
 		}
 		// it may not be new label
 		syncedLabel := labels[len(labels)-1]
-		fmt.Println("Successful addition of a label.")
+		fmt.Println("succeeded to add a label")
 		fmt.Println(util.LabelTableString([]todoist.Label{syncedLabel}))
 		return nil
 	},
 }
 
 var labelUpdateCmd = &cobra.Command{
-	Use:   "update id [new_name]",
+	Use:   "update [id]",
 	Short: "update label",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 1 {
-			return errors.New("Require label ID to update")
-		}
-		id, err := todoist.NewID(args[0])
-		if err != nil {
-			return fmt.Errorf("Invalid ID: %s", args[0])
-		}
 		client, err := util.NewClient()
 		if err != nil {
 			return err
 		}
+		if len(args) == 0 {
+			return errors.New("require label id to update")
+		}
+		id, err := todoist.NewID(args[0])
+		if err != nil {
+			return fmt.Errorf("invalid id: %s", args[0])
+		}
 		label := client.Label.Resolve(id)
 		if label == nil {
-			return fmt.Errorf("No such label id: %s", id)
+			return fmt.Errorf("no such label id: %s", id)
 		}
-		if len(args) > 1 {
-			label.Name = strings.Join(args[1:], " ")
-		}
-		colorStr, err := cmd.Flags().GetString("color")
-		if err != nil {
-			return errors.New("Invalid label color")
-		}
-		if len(colorStr) > 0 {
-			color, err := strconv.Atoi(colorStr)
-			if err != nil {
-				return fmt.Errorf("Invalid label color: %s", colorStr)
+		if name, err := cmd.Flags().GetString("name"); err != nil {
+			return err
+		} else {
+			if len(name) != 0 {
+				label.Name = name
 			}
-			label.Color = color
+		}
+		if color, err := cmd.Flags().GetInt("color"); err != nil {
+			return err
+		} else {
+			if cmd.Flags().Changed("color") {
+				label.Color = color
+			}
+		}
+		if order, err := cmd.Flags().GetInt("order"); err != nil {
+			return err
+		} else {
+			if cmd.Flags().Changed("order") {
+				label.ItemOrder = order
+			}
+		}
+		if favorite, err := cmd.Flags().GetBool("favorite"); err != nil {
+			return err
+		} else {
+			if favorite {
+				label.IsFavorite = true
+			}
+		}
+		if unFavorite, err := cmd.Flags().GetBool("un-favorite"); err != nil {
+			return err
+		} else {
+			if unFavorite {
+				label.IsFavorite = false
+			}
 		}
 		if _, err = client.Label.Update(*label); err != nil {
 			return err
@@ -123,53 +151,44 @@ var labelUpdateCmd = &cobra.Command{
 		}
 		syncedLabel := client.Label.Resolve(id)
 		if syncedLabel == nil {
-			return errors.New("Failed to add this label. It may be failed to sync.")
+			return errors.New("failed to add this label. it may be failed to sync")
 		}
-		fmt.Println("Successful updating label.")
+		fmt.Println("succeeded to update the label")
 		fmt.Println(util.LabelTableString([]todoist.Label{*syncedLabel}))
 		return nil
 	},
 }
 
 var labelDeleteCmd = &cobra.Command{
-	Use:   "delete id [...]",
-	Short: "delete labels",
+	Use:   "delete [id]",
+	Short: "delete label",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := util.AutoCommit(func(client todoist.Client, ctx context.Context) error {
-			return util.ProcessIDs(
-				args,
-				func(ids []todoist.ID) error {
-					var labels []todoist.Label
-					for _, id := range ids {
-						label := client.Label.Resolve(id)
-						if label == nil {
-							return fmt.Errorf("invalid id: %s", id)
-						}
-						labels = append(labels, *label)
-					}
-					fmt.Println(util.LabelTableString(labels))
-
-					reader := bufio.NewReader(os.Stdin)
-					fmt.Print("are you sure to delete above label(s)? (y/[n]): ")
-					ans, err := reader.ReadString('\n')
-					if ans != "y\n" || err != nil {
-						fmt.Println("abort")
-						return errors.New("abort")
-					}
-					for _, id := range ids {
-						if err := client.Label.Delete(id); err != nil {
-							return err
-						}
-					}
-					return nil
-				})
+			if len(args) == 0 {
+				return errors.New("require label id to delete")
+			}
+			return util.ProcessID(args[0], func(id todoist.ID) error {
+				label := client.Label.Resolve(id)
+				if label == nil {
+					return fmt.Errorf("invalid label id: %s", id)
+				}
+				fmt.Println(util.LabelTableString([]todoist.Label{*label}))
+				reader := bufio.NewReader(os.Stdin)
+				fmt.Print("are you sure to delete above label? (y/[n]): ")
+				ans, err := reader.ReadString('\n')
+				if ans != "y\n" || err != nil {
+					fmt.Println("abort")
+					return errors.New("abort")
+				}
+				return client.Label.Delete(id)
+			})
 		}); err != nil {
 			if err.Error() == "abort" {
 				return nil
 			}
 			return err
 		}
-		fmt.Println("Successful deleting of label(s).")
+		fmt.Println("succeeded to delete the label")
 		return nil
 	},
 }
@@ -177,9 +196,15 @@ var labelDeleteCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(labelCmd)
 	labelCmd.AddCommand(labelListCmd)
-	labelAddCmd.Flags().StringP("color", "c", "7", "color")
+	labelAddCmd.Flags().IntP("color", "c", 47, "color")
+	labelAddCmd.Flags().Int("order", 0, "item order")
+	labelAddCmd.Flags().Bool("favorite", false, "is favorite")
 	labelCmd.AddCommand(labelAddCmd)
-	labelUpdateCmd.Flags().StringP("color", "c", "", "color")
+	labelUpdateCmd.Flags().String("name", "", "name of the label")
+	labelUpdateCmd.Flags().IntP("color", "c", 47, "color")
+	labelUpdateCmd.Flags().Int("order", 0, "item order")
+	labelUpdateCmd.Flags().Bool("favorite", false, "is favorite")
+	labelUpdateCmd.Flags().Bool("un-favorite", false, "is not favorite")
 	labelCmd.AddCommand(labelUpdateCmd)
 	labelCmd.AddCommand(labelDeleteCmd)
 }

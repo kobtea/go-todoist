@@ -75,6 +75,9 @@ var projectAddCmd = &cobra.Command{
 		if project == nil {
 			return errors.New("failed to initialize a project")
 		}
+		if err != nil {
+			return err
+		}
 		if _, err = client.Project.Add(*project); err != nil {
 			return err
 		}
@@ -91,7 +94,7 @@ var projectAddCmd = &cobra.Command{
 		}
 		// it may not be new project
 		syncedProject := projects[len(projects)-1]
-		fmt.Println("succeeded to add an project")
+		fmt.Println("succeeded to add a project")
 		fmt.Println(util.ProjectTableString([]todoist.Project{syncedProject}))
 		return nil
 	},
@@ -99,7 +102,7 @@ var projectAddCmd = &cobra.Command{
 
 var projectUpdateCmd = &cobra.Command{
 	Use:   "update [id]",
-	Short: "update projects",
+	Short: "update project",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client, err := util.NewClient()
 		if err != nil {
@@ -126,7 +129,9 @@ var projectUpdateCmd = &cobra.Command{
 		if color, err := cmd.Flags().GetInt("color"); err != nil {
 			return err
 		} else {
-			project.Color = color
+			if cmd.Flags().Changed("color") {
+				project.Color = color
+			}
 		}
 		if collapsed, err := cmd.Flags().GetBool("collapsed"); err != nil {
 			return err
@@ -162,7 +167,7 @@ var projectUpdateCmd = &cobra.Command{
 		if parentStr, err := cmd.Flags().GetString("parent"); err != nil {
 			return err
 		} else {
-			if len(parentStr) != 0 {
+			if cmd.Flags().Changed("parent") {
 				if parent, err := todoist.NewID(parentStr); err != nil {
 					return err
 				} else {
@@ -175,9 +180,11 @@ var projectUpdateCmd = &cobra.Command{
 		if order, err := cmd.Flags().GetInt("order"); err != nil {
 			return err
 		} else {
-			project.ChildOrder = order
-			if err = client.Project.Reorder([]todoist.Project{*project}); err != nil {
-				return err
+			if cmd.Flags().Changed("order") {
+				project.ChildOrder = order
+				if err = client.Project.Reorder([]todoist.Project{*project}); err != nil {
+					return err
+				}
 			}
 		}
 		ctx := context.Background()
@@ -212,7 +219,7 @@ var projectDeleteCmd = &cobra.Command{
 				}
 				fmt.Println(util.ProjectTableString([]todoist.Project{*project}))
 				reader := bufio.NewReader(os.Stdin)
-				fmt.Print("are you sure to delete above project(s)? (y/[n]): ")
+				fmt.Print("are you sure to delete above project? (y/[n]): ")
 				ans, err := reader.ReadString('\n')
 				if ans != "y\n" || err != nil {
 					fmt.Println("abort")

@@ -3,7 +3,6 @@ package todoist
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/fatih/color"
 	"net/http"
 	"net/url"
@@ -12,9 +11,10 @@ import (
 
 type Label struct {
 	Entity
-	Name      string `json:"name"`
-	Color     int    `json:"color"`
-	ItemOrder int    `json:"item_order"`
+	Name       string  `json:"name"`
+	Color      int     `json:"color"`
+	ItemOrder  int     `json:"item_order"`
+	IsFavorite IntBool `json:"is_favorite"`
 }
 
 func (l Label) String() string {
@@ -24,23 +24,48 @@ func (l Label) String() string {
 func (l Label) ColorString() string {
 	var attr color.Attribute
 	switch l.Color {
-	case 2, 4, 10:
+	case 30, 31:
 		attr = color.FgHiRed
-	case 0, 11:
-		attr = color.FgHiGreen
-	case 1:
+	case 32, 33:
 		attr = color.FgHiYellow
-	case 5, 6:
-		attr = color.FgHiBlue
-	case 3:
-		attr = color.FgHiMagenta
-	case 8, 9:
+	case 34, 35, 36:
+		attr = color.FgHiGreen
+	case 37, 38, 39:
 		attr = color.FgHiCyan
-	case 7, 12:
-	default:
+	case 40, 41, 42:
+		attr = color.FgHiBlue
+	case 43, 44, 45, 46:
+		attr = color.FgHiMagenta
+	case 47, 48, 49:
 		attr = color.FgHiBlack
+	default:
+		attr = color.FgWhite
 	}
 	return color.New(attr).Sprint(l.String())
+}
+
+type NewLabelOpts struct {
+	Color      int
+	ItemOrder  int
+	IsFavorite IntBool
+}
+
+func NewLabel(name string, opts *NewLabelOpts) (*Label, error) {
+	if len(name) == 0 {
+		return nil, errors.New("new label requires a name")
+	}
+	label := Label{
+		Name:       name,
+		ItemOrder:  opts.ItemOrder,
+		IsFavorite: opts.IsFavorite,
+	}
+	label.ID = GenerateTempID()
+	if opts.Color == 0 {
+		label.Color = 47
+	} else {
+		label.Color = opts.Color
+	}
+	return &label, nil
 }
 
 type Labels []Label
@@ -67,10 +92,6 @@ type LabelClient struct {
 }
 
 func (c *LabelClient) Add(label Label) (*Label, error) {
-	if len(label.Name) == 0 {
-		return nil, errors.New("New label requires a name")
-	}
-	label.ID = GenerateTempID()
 	c.cache.store(label)
 	command := Command{
 		Type:   "label_add",
@@ -83,9 +104,6 @@ func (c *LabelClient) Add(label Label) (*Label, error) {
 }
 
 func (c *LabelClient) Update(label Label) (*Label, error) {
-	if !IsValidID(label.ID) {
-		return nil, fmt.Errorf("Invalid id: %s", label.ID)
-	}
 	command := Command{
 		Type: "label_update",
 		Args: label,
@@ -101,6 +119,22 @@ func (c *LabelClient) Delete(id ID) error {
 		UUID: GenerateUUID(),
 		Args: map[string]ID{
 			"id": id,
+		},
+	}
+	c.queue = append(c.queue, command)
+	return nil
+}
+
+func (c *LabelClient) UpdateOrders(labels []Label) error {
+	args := map[ID]int{}
+	for _, label := range labels {
+		args[label.ID] = label.ItemOrder
+	}
+	command := Command{
+		Type: "label_update_orders",
+		UUID: GenerateUUID(),
+		Args: map[string]map[ID]int{
+			"id_order_mapping": args,
 		},
 	}
 	c.queue = append(c.queue, command)

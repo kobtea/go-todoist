@@ -55,7 +55,7 @@ __todoist_custom_func() {
 			return
 			;;
 		todoist_label_update | todoist_label_delete)
-			__todoist_label_ids
+			__todoist_label_id
 			return
 			;;
 		todoist_project_update | todoist_project_delete | todoist_project_archive | todoist_project_unarchive)
