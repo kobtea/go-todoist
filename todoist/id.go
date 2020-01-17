@@ -2,8 +2,9 @@ package todoist
 
 import (
 	"fmt"
-	"github.com/satori/go.uuid"
 	"strconv"
+
+	"github.com/satori/go.uuid"
 )
 
 type ID string
@@ -75,7 +76,7 @@ func (i *ID) UnmarshalJSON(b []byte) (err error) {
 }
 
 func GenerateTempID() ID {
-	u, _ := uuid.NewV4()
+	u := uuid.NewV4()
 	return ID(u.String())
 }
 
@@ -89,7 +90,7 @@ func IsTempID(id ID) bool {
 type UUID string
 
 func GenerateUUID() UUID {
-	u, _ := uuid.NewV4()
+	u := uuid.NewV4()
 	return UUID(u.String())
 }
 
