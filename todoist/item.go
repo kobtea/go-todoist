@@ -3,7 +3,6 @@ package todoist
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -30,6 +29,45 @@ type Item struct {
 	DateAdded      Time    `json:"date_added,omitempty"`
 	CompletedDate  Time    `json:"completed_date"`
 }
+
+type NewItemOpts struct {
+	ProjectID       ID
+	Due             Due
+	Priority        int
+	ParentID        ID
+	ChildOrder      int
+	DayOrder        int
+	Collapsed       IntBool
+	Labels          []ID
+	AssignedByUID   ID
+	ResponsibleUID  ID
+	AutoReminder    bool
+	AutoParseLabels bool
+}
+
+func NewItem(content string, opts *NewItemOpts) (*Item, error) {
+	if len(content) == 0 {
+		return nil, errors.New("new item requires a content")
+	}
+	item := Item{
+		ProjectID:      opts.ProjectID,
+		Content:        content,
+		Due:            opts.Due,
+		ParentID:       opts.ParentID,
+		ChildOrder:     opts.ChildOrder,
+		DayOrder:       opts.DayOrder,
+		Collapsed:      opts.Collapsed,
+		Labels:         opts.Labels,
+		AssignedByUID:  opts.AssignedByUID,
+		ResponsibleUID: opts.ResponsibleUID,
+	}
+	item.ID = GenerateTempID()
+	if opts.Priority == 0 {
+		item.Priority = 1
+	} else {
+		item.Priority = opts.Priority
+	}
+	return &item, nil
 }
 
 func (i Item) IsOverDueDate() bool {
@@ -37,10 +75,7 @@ func (i Item) IsOverDueDate() bool {
 }
 
 func (i Item) IsChecked() bool {
-	if i.Checked == 1 {
-		return true
-	}
-	return false
+	return i.Checked.Bool()
 }
 
 type ItemClient struct {
@@ -49,10 +84,7 @@ type ItemClient struct {
 }
 
 func (c *ItemClient) Add(item Item) (*Item, error) {
-	if len(item.Content) == 0 {
-		return nil, errors.New("New item requires a content")
-	}
-	item.ID = GenerateTempID()
+	// TODO: support auto_reminder and auto_parse_labels
 	// append item to sync state only `add` method?
 	c.cache.store(item)
 	command := Command{
@@ -66,9 +98,6 @@ func (c *ItemClient) Add(item Item) (*Item, error) {
 }
 
 func (c *ItemClient) Update(item Item) (*Item, error) {
-	if !IsValidID(item.ID) {
-		return nil, fmt.Errorf("Invalid id: %s", item.ID)
-	}
 	command := Command{
 		Type: "item_update",
 		Args: item,
