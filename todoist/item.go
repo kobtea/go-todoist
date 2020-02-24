@@ -12,29 +12,24 @@ import (
 
 type Item struct {
 	Entity
-	UserID    ID     `json:"user_id,omitempty"`
-	ProjectID ID     `json:"project_id,omitempty"`
-	Content   string `json:"content"`
-	Due       struct {
-		Date        Time   `json:"date"`
-		Timezone    string `json:"timezone"`
-		IsRecurring bool   `json:"is_recurring"`
-		String      string `json:"string"`
-		Lang        string `json:"lang"`
-	} `json:"due,omitempty"`
-	Priority       int  `json:"priority,omitempty"`
-	ParentID       ID   `json:"parent_id,omitempty"`
-	ChildOrder     int  `json:"child_order,omitempty"`
-	DayOrder       int  `json:"day_order,omitempty"`
-	Collapsed      int  `json:"collapsed,omitempty"`
-	Labels         []ID `json:"labels,omitempty"`
-	AssignedByUID  ID   `json:"assigned_by_uid,omitempty"`
-	ResponsibleUID ID   `json:"responsible_uid,omitempty"`
-	Checked        int  `json:"checked,omitempty"`
-	InHistory      int  `json:"in_history,omitempty"`
-	SyncID         int  `json:"sync_id,omitempty"`
-	DateAdded      Time `json:"date_added,omitempty"`
-	CompletedDate  Time `json:"completed_date"`
+	UserID         ID      `json:"user_id,omitempty"`
+	ProjectID      ID      `json:"project_id,omitempty"`
+	Content        string  `json:"content"`
+	Due            Due     `json:"due,omitempty"`
+	Priority       int     `json:"priority,omitempty"`
+	ParentID       ID      `json:"parent_id,omitempty"`
+	ChildOrder     int     `json:"child_order,omitempty"`
+	DayOrder       int     `json:"day_order,omitempty"`
+	Collapsed      IntBool `json:"collapsed,omitempty"`
+	Labels         []ID    `json:"labels,omitempty"`
+	AssignedByUID  ID      `json:"assigned_by_uid,omitempty"`
+	ResponsibleUID ID      `json:"responsible_uid,omitempty"`
+	Checked        IntBool `json:"checked,omitempty"`
+	InHistory      IntBool `json:"in_history,omitempty"`
+	SyncID         int     `json:"sync_id,omitempty"`
+	DateAdded      Time    `json:"date_added,omitempty"`
+	CompletedDate  Time    `json:"completed_date"`
+}
 }
 
 func (i Item) IsOverDueDate() bool {
