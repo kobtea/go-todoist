@@ -17,7 +17,6 @@ Go to https://github.com/kobtea/go-todoist/releases
 ```bash
 $ go get -d github.com/kobtea/go-todoist
 $ cd $GOPATH/src/github.com/kobtea/go-todoist
-$ dep ensure
 $ make build
 ```
 
@@ -110,8 +109,8 @@ func main() {
 	cli.FullSync(ctx, []todoist.Command{})
 
 	// add item
-	item := todoist.Item{Content: "hello go-todoist hogehoge"}
-	cli.Item.Add(item)
+	item, _ := todoist.NewItem("hello go-todoist", &todoist.NewItemOpts{})
+	cli.Item.Add(*item)
 	cli.Commit(ctx)
 }
 ```

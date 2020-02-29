@@ -44,20 +44,18 @@ var itemAddCmd = &cobra.Command{
 			return err
 		}
 		content := strings.Join(args, " ")
-		item := todoist.Item{Content: content}
-
+		opts := todoist.NewItemOpts{}
 		projectIDorName, err := cmd.Flags().GetString("project")
 		if err != nil {
 			return errors.New("invalid project id or name")
 		}
 		if pid, err := todoist.NewID(projectIDorName); err != nil {
 			if project := client.Project.FindOneByName(projectIDorName); project != nil {
-				item.ProjectID = project.ID
+				opts.ProjectID = project.ID
 			}
 		} else {
-			item.ProjectID = pid
+			opts.ProjectID = pid
 		}
-
 		labelIDorNames, err := cmd.Flags().GetString("label")
 		if err != nil {
 			return errors.New("invalid label id(s) or name(s)")
@@ -66,29 +64,30 @@ var itemAddCmd = &cobra.Command{
 			for _, labelIDorName := range strings.Split(labelIDorNames, ",") {
 				if lid, err := todoist.NewID(labelIDorName); err != nil {
 					if label := client.Label.FindOneByName(labelIDorName); label != nil {
-						item.Labels = append(item.Labels, label.ID)
+						opts.Labels = append(opts.Labels, label.ID)
 					}
 				} else {
-					item.Labels = append(item.Labels, lid)
+					opts.Labels = append(opts.Labels, lid)
 				}
 			}
 		}
-
 		due, err := cmd.Flags().GetString("due")
 		if err != nil {
 			return errors.New("invalid due date format")
 		}
 		if len(due) > 0 {
-			item.Due.String = due
+			opts.Due.String = due
 		}
-
 		priority, err := cmd.Flags().GetInt("priority")
 		if err != nil {
 			return errors.New("invalid priority")
 		}
-		item.Priority = priority
-
-		if _, err = client.Item.Add(item); err != nil {
+		opts.Priority = priority
+		item, err := todoist.NewItem(content, &opts)
+		if err != nil {
+			return err
+		}
+		if _, err = client.Item.Add(*item); err != nil {
 			return err
 		}
 		ctx := context.Background()
