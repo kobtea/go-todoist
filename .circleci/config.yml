@@ -5,20 +5,10 @@ defaults: &defaults
 
 version: 2
 jobs:
-  setup:
-    <<: *defaults
-    steps:
-    - checkout
-    - run: |
-        make setup
-    - persist_to_workspace:
-        root: .
-        paths: .
   build:
     <<: *defaults
     steps:
-    - attach_workspace:
-        at: /go/src/github.com/kobtea/go-todoist
+    - checkout
     - run: |
         make test
         make build
@@ -34,23 +24,14 @@ jobs:
   release:
     <<: *defaults
     steps:
-    - attach_workspace:
-        at: /go/src/github.com/kobtea/go-todoist
+    - checkout
     - run: |
         make release
 workflows:
   version: 2
   build_and_release:
     jobs:
-    - setup:
-        filters:
-          tags:
-            only: /.*/
-          branches:
-            only: /.*/
     - build:
-        requires:
-        - setup
         filters:
           tags:
             only: /.*/
